@@ -2,15 +2,17 @@ package com.example.loanApplication.serviceImpl;
 
 import com.example.loanApplication.dto.EmiScheduleResponseDto;
 import com.example.loanApplication.entity.EmiSchedules;
+import com.example.loanApplication.entity.LoanAccount;
 import com.example.loanApplication.exception.BusinessException;
 import com.example.loanApplication.exception.ResourceNotFoundException;
 import com.example.loanApplication.repository.EmiSchedulesRepo;
+import com.example.loanApplication.repository.LoanAccountRepository;
 import com.example.loanApplication.service.EmiScheduleService;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.modelmapper.ModelMapper;
 import org.springframework.scheduling.annotation.Scheduled;
-import org.springframework.scheduling.annotation.Schedules;
+
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
@@ -27,7 +29,7 @@ public class EmiScheduleServiceImpl  implements EmiScheduleService {
 
     private final EmiSchedulesRepo emiSchedulesRepo;
     private final ModelMapper modelMapper;
-
+    private  final LoanAccountRepository loanAccountRepository;
     @Override
     public List<EmiScheduleResponseDto> generateEmi(Integer loanAccountId) {
         LoanAccount loanAccount = loanAccountRepository.findById(loanAccountId)

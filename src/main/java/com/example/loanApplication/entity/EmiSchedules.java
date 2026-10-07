@@ -21,7 +21,7 @@ public class EmiSchedules {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "LoanAccountId", nullable = false)
- //   private LoanAccount loanAccount;
+    private LoanAccount loanAccount;
 
     @Column(name = "InstallmentNo", nullable = false)
     private Integer installmentNo;
