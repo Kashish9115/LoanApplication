@@ -19,11 +19,8 @@ public class CibilReport {
     @Column(name = "CibilReportId")
     private Integer cibilReportId;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "CustomerId", nullable = false)
-   private Customer customer;
-
-
+    @Column(name = "CustomerId", nullable = false)
+    private Integer customerId;
 
     @Column(name = "PanNo", length = 20)
     private String panNo;
