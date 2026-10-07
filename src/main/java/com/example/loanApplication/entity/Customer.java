@@ -68,6 +68,7 @@ private  Integer age;
             precision = 18,
             scale = 2
     )
+    //
     private Double monthlyInvestment;
 
     @Column(name = "IsEmailVerified", nullable = false)
