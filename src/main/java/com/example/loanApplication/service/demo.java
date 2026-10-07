@@ -1,4 +1,5 @@
 package com.example.loanApplication.service;
 
-public interface PaymentService {
+public class demo {
+
 }
