@@ -23,7 +23,8 @@ public class Customer {
 
     @Column(name = "LastName", nullable = false, length = 50)
     private String lastName;
-
+@Column(name = "Age")
+private  Integer age;
     @Column(
             name = "Email",
             nullable = false,
@@ -58,7 +59,7 @@ public class Customer {
             precision = 18,
             scale = 2
     )
-    private BigDecimal monthlyIncome;
+    private Double monthlyIncome;
 
     // New field added for Registration FOIR Validation
     // (≤ 30% of MonthlyIncome)
@@ -67,7 +68,7 @@ public class Customer {
             precision = 18,
             scale = 2
     )
-    private BigDecimal monthlyInvestment;
+    private Double monthlyInvestment;
 
     @Column(name = "IsEmailVerified", nullable = false)
     private Boolean isEmailVerified = false;
