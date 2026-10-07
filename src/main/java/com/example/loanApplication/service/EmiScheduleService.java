@@ -16,4 +16,11 @@ public interface EmiScheduleService {
 
    void fillEmiOnDue();
 
+
+    void cancelFutureEmis(Integer loanAccountId, String reason);
+
+    List<EmiScheduleResponseDto> recalculateEmiSchedule(Integer loanAccountId);
+}
+
+
 }
