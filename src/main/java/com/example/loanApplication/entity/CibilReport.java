@@ -21,7 +21,7 @@ public class CibilReport {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "CustomerId", nullable = false)
-//   private Customer customer;
+   private Customer customer;
 
 
 
