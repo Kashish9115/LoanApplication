@@ -1,0 +1,31 @@
+{
+  "info": {
+    "name": "LoanApplication - KYC + Support",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {"key": "baseUrl", "value": "http://localhost:8080"}
+  ],
+  "item": [
+    {
+      "name": "KYC",
+      "item": [
+        {"name":"Upload PAN","request":{"method":"POST","header":[{"key":"Content-Type","value":"application/json"}],"body":{"mode":"raw","raw":"{\n  \"customerId\": 1,\n  \"documentType\": \"PAN\",\n  \"filePath\": \"uploads/kyc/pan_1.pdf\"\n}"},"url":{"raw":"{{baseUrl}}/api/kyc/documents","host":["{{baseUrl}}"],"path":["api","kyc","documents"]}}},
+        {"name":"Upload Aadhaar","request":{"method":"POST","header":[{"key":"Content-Type","value":"application/json"}],"body":{"mode":"raw","raw":"{\n  \"customerId\": 1,\n  \"documentType\": \"AADHAAR\",\n  \"filePath\": \"uploads/kyc/aadhaar_1.pdf\"\n}"},"url":{"raw":"{{baseUrl}}/api/kyc/documents","host":["{{baseUrl}}"],"path":["api","kyc","documents"]}}},
+        {"name":"Upload Salary Slip","request":{"method":"POST","header":[{"key":"Content-Type","value":"application/json"}],"body":{"mode":"raw","raw":"{\n  \"customerId\": 1,\n  \"documentType\": \"SALARY_SLIP\",\n  \"filePath\": \"uploads/kyc/salary_slip_1.pdf\"\n}"},"url":{"raw":"{{baseUrl}}/api/kyc/documents","host":["{{baseUrl}}"],"path":["api","kyc","documents"]}}},
+        {"name":"Pending Documents","request":{"method":"GET","url":{"raw":"{{baseUrl}}/api/kyc/officer/pending","host":["{{baseUrl}}"],"path":["api","kyc","officer","pending"]}}},
+        {"name":"Verify Document 1","request":{"method":"PUT","header":[{"key":"Content-Type","value":"application/json"}],"body":{"mode":"raw","raw":"{\n  \"verificationStatus\": \"VERIFIED\"\n}"},"url":{"raw":"{{baseUrl}}/api/kyc/officer/documents/1/verification","host":["{{baseUrl}}"],"path":["api","kyc","officer","documents","1","verification"]}}},
+        {"name":"KYC Status","request":{"method":"GET","url":{"raw":"{{baseUrl}}/api/kyc/customer/1/status","host":["{{baseUrl}}"],"path":["api","kyc","customer","1","status"]}}}
+      ]
+    },
+    {
+      "name": "Support",
+      "item": [
+        {"name":"Raise Ticket","request":{"method":"POST","header":[{"key":"Content-Type","value":"application/json"}],"body":{"mode":"raw","raw":"{\n  \"customerId\": 1,\n  \"loanAccountId\": null,\n  \"subject\": \"KYC Issue\",\n  \"description\": \"Need help with KYC verification.\"\n}"},"url":{"raw":"{{baseUrl}}/api/support/tickets","host":["{{baseUrl}}"],"path":["api","support","tickets"]}}},
+        {"name":"Customer Tickets","request":{"method":"GET","url":{"raw":"{{baseUrl}}/api/support/customer/1/tickets","host":["{{baseUrl}}"],"path":["api","support","customer","1","tickets"]}}},
+        {"name":"Open Tickets","request":{"method":"GET","url":{"raw":"{{baseUrl}}/api/support/officer/tickets?status=OPEN","host":["{{baseUrl}}"],"path":["api","support","officer","tickets"],"query":[{"key":"status","value":"OPEN"}]}}},
+        {"name":"Move Ticket To In Progress","request":{"method":"PUT","header":[{"key":"Content-Type","value":"application/json"}],"body":{"mode":"raw","raw":"{\n  \"status\": \"IN_PROGRESS\"\n}"},"url":{"raw":"{{baseUrl}}/api/support/officer/tickets/1/status","host":["{{baseUrl}}"],"path":["api","support","officer","tickets","1","status"]}}}
+      ]
+    }
+  ]
+}

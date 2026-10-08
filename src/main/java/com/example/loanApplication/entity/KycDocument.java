@@ -1,12 +1,12 @@
 package com.example.loanApplication.entity;
 
-
 import jakarta.persistence.*;
+import lombok.Data;
 
 @Entity
 @Table(name = "KycDocuments")
+@Data
 public class KycDocument {
-
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "DocumentId")
@@ -23,47 +23,4 @@ public class KycDocument {
 
     @Column(name = "VerificationStatus", length = 50)
     private String verificationStatus;
-
-    public KycDocument() {
-    }
-
-    public Integer getDocumentId() {
-        return documentId;
-    }
-
-    public void setDocumentId(Integer documentId) {
-        this.documentId = documentId;
-    }
-
-    public Integer getCustomerId() {
-        return customerId;
-    }
-
-    public void setCustomerId(Integer customerId) {
-        this.customerId = customerId;
-    }
-
-    public String getDocumentType() {
-        return documentType;
-    }
-
-    public void setDocumentType(String documentType) {
-        this.documentType = documentType;
-    }
-
-    public String getFilePath() {
-        return filePath;
-    }
-
-    public void setFilePath(String filePath) {
-        this.filePath = filePath;
-    }
-
-    public String getVerificationStatus() {
-        return verificationStatus;
-    }
-
-    public void setVerificationStatus(String verificationStatus) {
-        this.verificationStatus = verificationStatus;
-    }
 }

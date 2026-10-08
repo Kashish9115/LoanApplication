@@ -1,14 +1,10 @@
 package com.example.loanApplication.dto;
 
+import jakarta.validation.constraints.NotBlank;
+import lombok.Data;
+
+@Data
 public class KycVerificationRequest {
-
+    @NotBlank
     private String verificationStatus;
-
-    public String getVerificationStatus() {
-        return verificationStatus;
-    }
-
-    public void setVerificationStatus(String verificationStatus) {
-        this.verificationStatus = verificationStatus;
-    }
 }

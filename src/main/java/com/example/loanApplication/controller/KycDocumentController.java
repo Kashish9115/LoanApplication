@@ -1,84 +1,57 @@
 package com.example.loanApplication.controller;
 
-import com.example.loanApplication.dto.KycDocumentRequest;
-import com.example.loanApplication.dto.KycDocumentResponse;
-import com.example.loanApplication.dto.KycVerificationRequest;
+import com.example.loanApplication.dto.*;
 import com.example.loanApplication.service.KycDocumentService;
+import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/kyc/documents")
+@RequestMapping("/api/kyc")
 public class KycDocumentController {
-
     private final KycDocumentService service;
 
     public KycDocumentController(KycDocumentService service) {
         this.service = service;
     }
 
-    @PostMapping
-    public ResponseEntity<KycDocumentResponse> createDocument(
-            @RequestBody KycDocumentRequest request
-    ) {
-
-        return ResponseEntity
-                .status(HttpStatus.CREATED)
-                .body(service.createDocument(request));
-    }
-
-    @GetMapping("/{documentId}")
-    public ResponseEntity<KycDocumentResponse> getDocument(
-            @PathVariable Integer documentId
-    ) {
-
-        return ResponseEntity.ok(
-                service.getDocument(documentId)
-        );
+    @PostMapping("/documents")
+    public ResponseEntity<KycDocumentResponse> upload(@Valid @RequestBody KycDocumentRequest request) {
+        return ResponseEntity.status(HttpStatus.CREATED).body(service.uploadDocument(request));
     }
 
     @GetMapping("/customer/{customerId}")
-    public ResponseEntity<List<KycDocumentResponse>> getDocumentsByCustomer(
-            @PathVariable Integer customerId
-    ) {
-
-        return ResponseEntity.ok(
-                service.getDocumentsByCustomer(customerId)
-        );
+    public ResponseEntity<List<KycDocumentResponse>> customerKyc(@PathVariable Integer customerId) {
+        return ResponseEntity.ok(service.getCustomerKyc(customerId));
     }
 
-    @PutMapping("/{documentId}")
-    public ResponseEntity<KycDocumentResponse> updateDocument(
+    @GetMapping("/officer/pending")
+    public ResponseEntity<List<KycDocumentResponse>> pending() {
+        return ResponseEntity.ok(service.getPendingDocuments());
+    }
+
+    @GetMapping("/documents/{documentId}")
+    public ResponseEntity<KycDocumentResponse> document(@PathVariable Integer documentId) {
+        return ResponseEntity.ok(service.getDocument(documentId));
+    }
+
+    @PutMapping("/officer/documents/{documentId}/verification")
+    public ResponseEntity<KycDocumentResponse> verify(
             @PathVariable Integer documentId,
-            @RequestBody KycDocumentRequest request
-    ) {
-
-        return ResponseEntity.ok(
-                service.updateDocument(documentId, request)
-        );
+            @Valid @RequestBody KycVerificationRequest request) {
+        return ResponseEntity.ok(service.verifyDocument(documentId, request));
     }
 
-    @PutMapping("/{documentId}/verification")
-    public ResponseEntity<KycDocumentResponse> updateVerificationStatus(
-            @PathVariable Integer documentId,
-            @RequestBody KycVerificationRequest request
-    ) {
-
-        return ResponseEntity.ok(
-                service.updateVerificationStatus(documentId, request)
-        );
+    @GetMapping("/customer/{customerId}/status")
+    public ResponseEntity<Boolean> status(@PathVariable Integer customerId) {
+        return ResponseEntity.ok(service.isKycCompleted(customerId));
     }
 
-    @DeleteMapping("/{documentId}")
-    public ResponseEntity<Void> deleteDocument(
-            @PathVariable Integer documentId
-    ) {
-
+    @DeleteMapping("/documents/{documentId}")
+    public ResponseEntity<Void> delete(@PathVariable Integer documentId) {
         service.deleteDocument(documentId);
-
         return ResponseEntity.noContent().build();
     }
 }
