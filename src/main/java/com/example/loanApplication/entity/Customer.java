@@ -51,7 +51,6 @@ private  Integer age;
 
     @Column(name = "EmploymentType", nullable = false, length = 50)
     private String employmentType;
-    // Government, Private Sector, Self-Employed
 
     @Column(
             name = "MonthlyIncome",
