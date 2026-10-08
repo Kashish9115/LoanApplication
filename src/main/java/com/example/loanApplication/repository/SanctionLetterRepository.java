@@ -13,4 +13,5 @@ public interface SanctionLetterRepository
 
     Optional<SanctionLetter>
     findTopByDealIdOrderBySanctionIdDesc(Integer dealId);
+
 }

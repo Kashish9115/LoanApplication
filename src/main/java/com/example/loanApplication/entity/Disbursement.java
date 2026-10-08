@@ -35,19 +35,54 @@ public class Disbursement {
     @Column(name = "DealId", nullable = false)
     private Integer dealId;
 
-    @Column(name = "DisburseAmount", precision = 18, scale = 2)
+    @Column(
+            name = "DisburseAmount",
+            precision = 18,
+            scale = 2,
+            nullable = false
+    )
     private BigDecimal amount;
 
+    /*
+     * Bank from which / through which
+     * loan amount is disbursed.
+     *
+     * Value comes from:
+     * LoanDeal.bankName
+     */
+    @Column(name = "BankPartner", length = 200)
+    private String bankPartner;
+
+    /*
+     * Customer bank account number.
+     *
+     * Value comes from:
+     * LoanDeal.bankAccountNumber
+     */
     @Column(name = "BankAccountNumber", length = 50)
     private String bankAccountNumber;
 
+    /*
+     * Customer bank IFSC code.
+     *
+     * Value comes from:
+     * LoanDeal.ifscCode
+     */
     @Column(name = "IFSCCode", length = 20)
     private String ifscCode;
+
+    /*
+     * Actual date and time when
+     * the disbursement was completed.
+     *
+     * PENDING       -> null
+     * COMPLETED     -> LocalDateTime.now()
+     */
+    @Column(name = "DisbursementDate")
+    private LocalDateTime disbursementDate;
+
 
     @Enumerated(EnumType.STRING)
     @Column(name = "Status", length = 50)
     private DisbursementStatus status;
-
-    @Column(name = "DisbursedAt")
-    private LocalDateTime disbursedAt;
 }

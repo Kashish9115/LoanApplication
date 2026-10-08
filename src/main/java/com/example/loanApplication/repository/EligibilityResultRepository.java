@@ -13,4 +13,5 @@ public interface EligibilityResultRepository
 
     Optional<EligibilityResult>
     findTopByCustomerIdOrderByEligibilityIdDesc(Integer customerId);
+
 }

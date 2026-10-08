@@ -26,6 +26,7 @@ public interface LoanAccountRepository
 
 
 
+
     Page<LoanAccount>
     findByCustomerIdOrderByLoanAccountIdDesc(
             Integer customerId,

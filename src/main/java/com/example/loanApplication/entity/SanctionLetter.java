@@ -43,6 +43,7 @@ public class SanctionLetter {
     @Column(name = "EmiAmount", precision = 18, scale = 2)
     private BigDecimal emiAmount;
 
+
     @Column(name = "CreatedAt")
     private LocalDateTime createdAt;
 }

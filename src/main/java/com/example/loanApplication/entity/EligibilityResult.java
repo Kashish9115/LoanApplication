@@ -36,6 +36,7 @@ public class EligibilityResult {
     @Column(name = "IsEligible", nullable = false)
     private Boolean isEligible;
 
+
     @Column(name = "LoanAmount", precision = 18, scale = 2)
     private BigDecimal loanAmount;
 

@@ -6,5 +6,6 @@ public enum LoanAccountStatus {
 
     CLOSED,
 
+
     DEFAULTED
 }
