@@ -1,6 +1,6 @@
 package com.example.loanApplication.service;
 
-import com.example.loanApplication.dto.PenaltyChargesDto;
+import com.example.loanApplication.dto.PenaltyChargesRequestDto;
 
 import java.math.BigDecimal;
 
@@ -9,12 +9,12 @@ public interface PenaltyService {
 
 
 
-  PenaltyChargesDto  applyBounceCharge(Long emiScheduleId, BigDecimal bounceAmount);
+  PenaltyChargesRequestDto applyBounceCharge(Long emiScheduleId, BigDecimal bounceAmount);
 
 
-  PenaltyChargesDto calculateDailyLateInterest(Long loanAccountId, int daysOverdue);
+  PenaltyChargesRequestDto calculateDailyLateInterest(Long loanAccountId, int daysOverdue);
 
-   PenaltyChargesDto waivePenaltyCharge(Long penaltyChargeId, Long ticketId);
+   PenaltyChargesRequestDto waivePenaltyCharge(Long penaltyChargeId, Long ticketId);
 
 
 

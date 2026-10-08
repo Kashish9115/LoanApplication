@@ -6,7 +6,7 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 @Data
-public class PenaltyChargesDto {
+public class PenaltyChargesRequestDto {
 
 
     private Integer penaltyChargeId;

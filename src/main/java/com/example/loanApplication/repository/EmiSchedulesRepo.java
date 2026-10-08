@@ -3,6 +3,7 @@ package com.example.loanApplication.repository;
 import com.example.loanApplication.entity.EmiSchedules;
 import org.springframework.data.jpa.repository.JpaRepository;
 
+import javax.swing.text.html.Option;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -49,4 +50,12 @@ public interface EmiSchedulesRepo  extends JpaRepository< EmiSchedules, Integer>
 
 
     List<EmiSchedules> findByLoanAccount_LoanAccountIdAndPaymentStatusNotAndDueDateGreaterThanEqualOrderByDueDateAsc(Integer loanAccountId, String paid, LocalDate now);
+
+ List<EmiSchedules> findByLoanAccountIdOrderByInstallmentNoAsc(Integer loanAccountId).
+
+    List<EmiSchedules>
+    findByLoanAccount_LoanAccountIdAndPaymentStatusOrderByInstallmentNoAsc(
+            Integer loanAccountId,
+            String paymentStatus
+    );
 }
