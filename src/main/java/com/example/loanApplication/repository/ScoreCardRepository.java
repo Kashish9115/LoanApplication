@@ -13,4 +13,5 @@ public interface ScoreCardRepository
 
     Optional<ScoreCard>
     findTopByCustomerIdOrderByScoreCardIdDesc(Integer customerId);
+
 }

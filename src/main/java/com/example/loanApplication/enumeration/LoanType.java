@@ -4,5 +4,6 @@ public enum LoanType {
 
     HOME_LOAN,
 
+
     VEHICLE_LOAN
 }

@@ -1,6 +1,6 @@
 package com.example.loanApplication.dto;
 
-import com.example.loanApplication.enumeration.LoanAccountStatus;
+import com.example.loanApplication.enumeration.LoanDealStatus;
 import com.example.loanApplication.enumeration.LoanType;
 
 import lombok.AllArgsConstructor;
@@ -15,24 +15,19 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class LoanAccountResponse {
+public class SanctionResponse {
 
-    private Integer loanAccountId;
+    private Integer sanctionId;
 
     private Integer dealId;
 
     private Integer customerId;
 
-    private String loanAccountNo;
-
     private LoanType loanType;
 
-    private BigDecimal loanAmount;
-
-    private BigDecimal outstandingAmount;
+    private BigDecimal approvedLoanAmount;
 
     private BigDecimal interestRate;
-
 
     private Integer tenureMonths;
 
@@ -40,7 +35,7 @@ public class LoanAccountResponse {
 
     private Integer emiDay;
 
-    private LoanAccountStatus status;
+    private LoanDealStatus dealStatus;
 
     private LocalDateTime createdAt;
 

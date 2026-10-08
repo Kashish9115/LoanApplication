@@ -18,6 +18,7 @@ public interface DealReviewRepository
             Integer dealId
     );
 
+
     Page<DealReview>
     findByOfficerIdOrderByReviewIdDesc(
             Integer officerId,

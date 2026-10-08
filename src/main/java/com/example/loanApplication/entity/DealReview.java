@@ -24,6 +24,7 @@ import lombok.NoArgsConstructor;
 @Builder
 public class DealReview {
 
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "ReviewId")

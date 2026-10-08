@@ -21,4 +21,5 @@ public interface LoanDealRepository
             Integer customerId,
             Pageable pageable
     );
+
 }
