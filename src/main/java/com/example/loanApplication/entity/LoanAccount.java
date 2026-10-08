@@ -2,6 +2,8 @@ package com.example.loanApplication.entity;
 
 import com.example.loanApplication.enumeration.LoanAccountStatus;
 
+import java.time.LocalDate;
+
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -65,4 +67,11 @@ public class LoanAccount {
 
     @Column(name = "CreatedAt")
     private LocalDateTime createdAt;
+
+
+
+
+
+    @Column(name = "DisbursementDate")
+    private LocalDate disbursementDate;
 }
