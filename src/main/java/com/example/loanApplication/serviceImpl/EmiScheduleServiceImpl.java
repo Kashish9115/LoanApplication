@@ -35,7 +35,7 @@ private  final LoanAccountRepository loanAccountRepo;
 
 
 
-     List<EmiSchedules> emiSchedulesListofUser =   emiSchedulesRepo.findByLoanAccountIdOrderByInstallmentNoAsc(loanAccountId);
+     List<EmiSchedules> emiSchedulesListofUser =   emiSchedulesRepo.findByLoanAccount_LoanAccountIdOrderByInstallmentNoAsc(loanAccountId);
      return  emiSchedulesListofUser.stream().map(schedules->modelMapper.map(schedules,EmiScheduleResponseDto.class)).toList();
     }
 
@@ -45,89 +45,231 @@ private  final LoanAccountRepository loanAccountRepo;
     }
 
     //extra
-    @Override
-    public List<EmiScheduleResponseDto> getUserEmiSchedules(Integer loanAccountId) {
-        return List.of();
-    }
+//    @Override
+//    public List<EmiScheduleResponseDto> getUserEmiSchedules(Integer loanAccountId) {
+//        return List.of();
+//    }
+
+//    @Override
+//    public List<EmiScheduleResponseDto> getUpcomingEmi(Integer loanAccountId) {
+//        return List.of();
+//    }
+
+//    @Override
+//    public List<EmiScheduleResponseDto> generateEmiSchedule(LoanAccount account) {
+//        int emiday = account.getEmiDay();
+//        BigDecimal getInterestRate = account.getInterestRate();
+//        Integer tenuremonths = account.getTenureMonths();
+//        BigDecimal p = account.getLoanAmount();
+//        BigDecimal mr = getInterestRate.divide(BigDecimal.valueOf(1200, 10));
+//        BigDecimal upperfactor = BigDecimal.ONE.add(mr);
+//        BigDecimal power = BigDecimal.ONE;
+//        for (int i = 0; i < tenuremonths; i++) {
+//            power = power.multiply(upperfactor);
+//            BigDecimal numerator = p.multiply(mr).multiply(power);
+//
+//            BigDecimal denominator = power.subtract(BigDecimal.ONE);
+//
+//            BigDecimal Emi = numerator.divide(denominator, 10, RoundingMode.HALF_UP);
+//            Emi = Emi.setScale(2, RoundingMode.HALF_UP);
+//            if (mr.compareTo(BigDecimal.ZERO) == 0) {
+//                Emi = p.divide(
+//                        BigDecimal.valueOf(tenuremonths),
+//                        2,
+//                        RoundingMode.HALF_UP
+//                );
+//            }
+//            BigDecimal openingBalance = p;
+//            LocalDate dueDate = account.getDisbursementDate().plusMonths(1).withDayOfMonth(emiday);
+//            List<EmiSchedules> schedules = new ArrayList<>();
+//            for (int installmentNo = 1; installmentNo <= tenuremonths; installmentNo++) {
+//                BigDecimal interestAmount = openingBalance.multiply(mr).setScale(2, RoundingMode.HALF_UP);
+//
+//                BigDecimal principalAmount = Emi.subtract(interestAmount).setScale(2, RoundingMode.HALF_UP);
+//                BigDecimal closingBalance = openingBalance.subtract(principalAmount).setScale(2, RoundingMode.HALF_UP);
+//                if (installmentNo == tenuremonths) {
+//                    principalAmount = openingBalance;
+//                    Emi = principalAmount.add(interestAmount).setScale(2, RoundingMode.HALF_UP);
+//                    closingBalance = BigDecimal.ZERO.setScale(2);
+//
+//                }
+//
+//
+//                EmiSchedules schedule = new EmiSchedules();
+//
+//                schedule.setLoanAccount(
+//                        account
+//                );
+//
+//                schedule.setInstallmentNo(installmentNo);
+//                schedule.setDueDate(dueDate);
+//                schedule.setOpeningBalance(openingBalance);
+//                schedule.setInterestAmount(interestAmount);
+//                schedule.setPrincipalAmount(principalAmount);
+//                schedule.setEmi(Emi);
+//                schedule.setClosingBalance(closingBalance);
+//                schedule.setPaymentStatus("PENDING");
+//
+//                schedules.add(schedule);
+//
+//                openingBalance = closingBalance;
+//                dueDate = dueDate.plusMonths(1);
+//
+//
+//            }
+//            List<EmiSchedules> saveSchedules = emiSchedulesRepo.saveAll(schedules);
+//
+//            return saveSchedules.stream()
+//                    .map(schedule ->
+//                            modelMapper.map(
+//                                    schedule,
+//                                    EmiScheduleResponseDto.class
+//                            )
+//                    )
+//                    .toList();
+//
+//
+//        }
+//
+//    }
+
+
+
+
 
     @Override
-    public List<EmiScheduleResponseDto> getUpcomingEmi(Integer loanAccountId) {
-        return List.of();
-    }
+    public List<EmiScheduleResponseDto> generateEmiSchedule(LoanAccount account) {
 
-    @Override
-    public EmiScheduleResponseDto generateEmiSchedule(LoanAccount account) {
         int emiday = account.getEmiDay();
         BigDecimal getInterestRate = account.getInterestRate();
         Integer tenuremonths = account.getTenureMonths();
         BigDecimal p = account.getLoanAmount();
-        BigDecimal mr = getInterestRate.divide(BigDecimal.valueOf(1200, 10));
-        BigDecimal upperfactor = BigDecimal.ONE.add(mr);
-        BigDecimal power = BigDecimal.ONE;
-        for (int i = 0; i < tenuremonths; i++) {
-            power = power.multiply(upperfactor);
-            BigDecimal numerator = p.multiply(mr).multiply(power);
 
-            BigDecimal denominator = power.subtract(BigDecimal.ONE);
+        BigDecimal mr = getInterestRate.divide(
+                BigDecimal.valueOf(1200),
+                10,
+                RoundingMode.HALF_UP
+        );
 
-            BigDecimal Emi = numerator.divide(denominator, 10, RoundingMode.HALF_UP);
-            Emi = Emi.setScale(2, RoundingMode.HALF_UP);
-            if (mr.compareTo(BigDecimal.ZERO) == 0) {
-                Emi = p.divide(
-                        BigDecimal.valueOf(tenuremonths),
-                        2,
-                        RoundingMode.HALF_UP
-                );
-            }
-            BigDecimal openingBalance = p;
-            LocalDate dueDate = account.getDisbursementDate().toLocalDate().plusMonths(1).withDayOfMonth(emiday);
-            List<EmiSchedules> schedules = new ArrayList<>();
-            for (int installmentNo = 1; installmentNo <= tenuremonths; installmentNo++) {
-                BigDecimal interestAmount = openingBalance.multiply(mr).setScale(2, RoundingMode.HALF_UP);
+        BigDecimal Emi;
 
-                BigDecimal principalAmount = Emi.subtract(interestAmount).setScale(2, RoundingMode.HALF_UP);
-                BigDecimal closingBalance = openingBalance.subtract(principalAmount).setScale(2, RoundingMode.HALF_UP);
-                if (installmentNo == tenuremonths) {
-                    principalAmount = openingBalance;
-                    Emi = principalAmount.add(interestAmount).setScale(2, RoundingMode.HALF_UP);
-                    closingBalance = BigDecimal.ZERO.setScale(2);
+        // EMI calculation
+        if (mr.compareTo(BigDecimal.ZERO) == 0) {
 
-                }
+            Emi = p.divide(
+                    BigDecimal.valueOf(tenuremonths),
+                    2,
+                    RoundingMode.HALF_UP
+            );
 
-                EmiSchedules schedule = new EmiSchedules();
+        } else {
 
-                schedule.setLoanAccount(
-                        account
-                );
+            BigDecimal upperfactor = BigDecimal.ONE.add(mr);
 
-                schedule.setInstallmentNo(installmentNo);
-                schedule.setDueDate(dueDate);
-                schedule.setOpeningBalance(openingBalance);
-                schedule.setInterestAmount(interestAmount);
-                schedule.setPrincipalAmount(principalAmount);
-                schedule.setEmi(Emi);
-                schedule.setClosingBalance(closingBalance);
-                schedule.setPaymentStatus("PENDING");
+            BigDecimal power = upperfactor.pow(tenuremonths);
 
-                schedules.add(schedule);
+            BigDecimal numerator = p
+                    .multiply(mr)
+                    .multiply(power);
 
-                openingBalance = closingBalance;
-                dueDate = dueDate.plusMonths(1);
+            BigDecimal denominator = power
+                    .subtract(BigDecimal.ONE);
 
+            Emi = numerator.divide(
+                    denominator,
+                    10,
+                    RoundingMode.HALF_UP
+            );
 
-            }
-            List<EmiSchedules> saveSchedules = emiSchedulesRepo.saveAll(schedules);
-
-            return saveSchedules.stream()
-                    .map(schedule ->
-                            modelMapper.map(
-                                    schedule,
-                                    EmiScheduleResponseDto.class
-                            )
-                    )
-                    .toList();
-
+            Emi = Emi.setScale(
+                    2,
+                    RoundingMode.HALF_UP
+            );
         }
+
+        BigDecimal openingBalance = p;
+
+        LocalDate dueDate = account.getDisbursementDate()
+                .plusMonths(1)
+                .withDayOfMonth(emiday);
+
+        List<EmiSchedules> schedules = new ArrayList<>();
+
+        // Generate EMI schedules
+        for (int installmentNo = 1;
+             installmentNo <= tenuremonths;
+             installmentNo++) {
+
+            BigDecimal interestAmount = openingBalance
+                    .multiply(mr)
+                    .setScale(
+                            2,
+                            RoundingMode.HALF_UP
+                    );
+
+            BigDecimal principalAmount = Emi
+                    .subtract(interestAmount)
+                    .setScale(
+                            2,
+                            RoundingMode.HALF_UP
+                    );
+
+            BigDecimal closingBalance = openingBalance
+                    .subtract(principalAmount)
+                    .setScale(
+                            2,
+                            RoundingMode.HALF_UP
+                    );
+
+            // Last EMI adjustment
+            if (installmentNo == tenuremonths) {
+
+                principalAmount = openingBalance;
+
+                Emi = principalAmount
+                        .add(interestAmount)
+                        .setScale(
+                                2,
+                                RoundingMode.HALF_UP
+                        );
+
+                closingBalance = BigDecimal.ZERO
+                        .setScale(
+                                2,
+                                RoundingMode.HALF_UP
+                        );
+            }
+
+            EmiSchedules schedule = new EmiSchedules();
+
+            schedule.setLoanAccount(account);
+            schedule.setInstallmentNo(installmentNo);
+            schedule.setDueDate(dueDate);
+            schedule.setOpeningBalance(openingBalance);
+            schedule.setInterestAmount(interestAmount);
+            schedule.setPrincipalAmount(principalAmount);
+            schedule.setEmi(Emi);
+            schedule.setClosingBalance(closingBalance);
+            schedule.setPaymentStatus("PENDING");
+
+            schedules.add(schedule);
+
+            openingBalance = closingBalance;
+
+            dueDate = dueDate.plusMonths(1);
+        }
+
+        List<EmiSchedules> saveSchedules =
+                emiSchedulesRepo.saveAll(schedules);
+
+        return saveSchedules.stream()
+                .map(schedule ->
+                        modelMapper.map(
+                                schedule,
+                                EmiScheduleResponseDto.class
+                        )
+                )
+                .toList();
     }
 
         @Override

@@ -26,36 +26,40 @@ public interface EmiSchedulesRepo  extends JpaRepository< EmiSchedules, Integer>
 //            String paymentStatus);
 
 
-    boolean existsByLoanAccount_LoanAccountId(
-            Integer loanAccountId);
-
-    List<EmiSchedules> findByLoanAccount_LoanAccountId(
-            Integer loanAccountId);
-
-    List<EmiSchedules>
-    findByLoanAccount_LoanAccountIdAndPaymentStatusAndDueDateGreaterThanEqualOrderByDueDateAsc(
-            Integer loanAccountId,
-            String paymentStatus,
-            LocalDate dueDate);
-
-    List<EmiSchedules>
-    findByDueDateLessThanEqualAndPaymentStatus(
-            LocalDate dueDate,
-            String paymentStatus);
-
-    List<EmiSchedules>
-    findByLoanAccount_LoanAccountIdAndPaymentStatus(
-            Integer loanAccountId,
-            String paymentStatus);
-
-
+//    boolean existsByLoanAccount_LoanAccountId(
+//            Integer loanAccountId);
+//
+//    List<EmiSchedules> findByLoanAccount_LoanAccountId(
+//            Integer loanAccountId);
+//
+//    List<EmiSchedules>
+//    findByLoanAccount_LoanAccountIdAndPaymentStatusAndDueDateGreaterThanEqualOrderByDueDateAsc(
+//            Integer loanAccountId,
+//            String paymentStatus,
+//            LocalDate dueDate);
+//
+//    List<EmiSchedules>
+//    findByDueDateLessThanEqualAndPaymentStatus(
+//            LocalDate dueDate,
+//            String paymentStatus);
+//
+//    List<EmiSchedules>
+//    findByLoanAccount_LoanAccountIdAndPaymentStatus(
+//            Integer loanAccountId,
+//            String paymentStatus);
+//
+//
     List<EmiSchedules> findByLoanAccount_LoanAccountIdAndPaymentStatusNotAndDueDateGreaterThanEqualOrderByDueDateAsc(Integer loanAccountId, String paid, LocalDate now);
 
- List<EmiSchedules> findByLoanAccountIdOrderByInstallmentNoAsc(Integer loanAccountId).
+ //List<EmiSchedules> findByLoanAccountIdOrderByInstallmentNoAsc(Integer loanAccountId);
 
     List<EmiSchedules>
     findByLoanAccount_LoanAccountIdAndPaymentStatusOrderByInstallmentNoAsc(
             Integer loanAccountId,
             String paymentStatus
+    );
+
+    List<EmiSchedules> findByLoanAccount_LoanAccountIdOrderByInstallmentNoAsc(
+            Integer loanAccountId
     );
 }

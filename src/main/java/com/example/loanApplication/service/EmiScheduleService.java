@@ -14,11 +14,11 @@ public interface EmiScheduleService {
 
     List<PenaltyChargesRequestDto> getItemizedEmiBreakdown(Long emiScheduleId);
 
-    List<EmiScheduleResponseDto> getUserEmiSchedules(Integer loanAccountId);
+   // List<EmiScheduleResponseDto> getUserEmiSchedules(Integer loanAccountId);
 
-    List<EmiScheduleResponseDto> getUpcomingEmi(Integer loanAccountId);
+  //  List<EmiScheduleResponseDto> getUpcomingEmi(Integer loanAccountId);
 
-     EmiScheduleResponseDto  generateEmiSchedule(LoanAccount account);
+     List<EmiScheduleResponseDto>  generateEmiSchedule(LoanAccount account);
 
 
   // void fillEmiOnDue();
