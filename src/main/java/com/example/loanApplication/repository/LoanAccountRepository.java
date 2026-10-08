@@ -22,6 +22,10 @@ public interface LoanAccountRepository
             Integer customerId
     );
 
+
+
+
+
     Page<LoanAccount>
     findByCustomerIdOrderByLoanAccountIdDesc(
             Integer customerId,
