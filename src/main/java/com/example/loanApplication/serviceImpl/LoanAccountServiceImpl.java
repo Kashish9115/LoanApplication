@@ -71,7 +71,7 @@ public class LoanAccountServiceImpl implements LoanAccountService {
         /*
          * STEP 3
          * Prevent duplicate loan account
-         * for the same deal.
+         * for same DealId.
          */
         loanAccountRepository
                 .findByDealId(dealId)
@@ -100,7 +100,8 @@ public class LoanAccountServiceImpl implements LoanAccountService {
 
         /*
          * STEP 5
-         * Validate interest rate.
+         * Interest rate should already
+         * be generated during sanction.
          */
         if (loanDeal.getInterestRate() == null) {
 
@@ -112,7 +113,8 @@ public class LoanAccountServiceImpl implements LoanAccountService {
 
         /*
          * STEP 6
-         * Validate EMI amount.
+         * EMI should already
+         * be generated during sanction.
          */
         if (loanDeal.getEmiAmount() == null) {
 
@@ -124,11 +126,24 @@ public class LoanAccountServiceImpl implements LoanAccountService {
 
         /*
          * STEP 7
-         * Generate loan account number.
+         * Preferred disbursement date
+         * must be available.
+         */
+        if (loanDeal.getPreferredDisbursementDate() == null) {
+
+            throw new InvalidLoanDealException(
+                    "Disbursement date is not available for this loan."
+            );
+        }
+
+
+        /*
+         * STEP 8
+         * Generate Loan Account Number.
          *
          * Example:
-         * dealId = 1
-         * LA0000000001
+         * Deal ID = 1
+         * Loan Account No = LA0000000001
          */
         String loanAccountNo =
                 generateLoanAccountNumber(
@@ -137,14 +152,20 @@ public class LoanAccountServiceImpl implements LoanAccountService {
 
 
         /*
-         * STEP 8
-         * Create LoanAccount.
+         * STEP 9
+         * Create Loan Account.
          *
-         * outstandingAmount maps to
-         * OutstandingPrincipal in DB.
+         * LoanAmount
+         * =
+         * ApprovedAmount
          *
-         * status maps to
-         * LoanStatus in DB.
+         * OutstandingPrincipal
+         * =
+         * ApprovedAmount
+         *
+         * DisbursementDate
+         * =
+         * PreferredDisbursementDate
          */
         LoanAccount loanAccount =
                 LoanAccount.builder()
@@ -178,6 +199,9 @@ public class LoanAccountServiceImpl implements LoanAccountService {
                         .status(
                                 LoanAccountStatus.ACTIVE
                         )
+                        .disbursementDate(
+                                loanDeal.getPreferredDisbursementDate()
+                        )
                         .createdAt(
                                 LocalDateTime.now()
                         )
@@ -185,8 +209,8 @@ public class LoanAccountServiceImpl implements LoanAccountService {
 
 
         /*
-         * STEP 9
-         * Save account.
+         * STEP 10
+         * Save Loan Account.
          */
         LoanAccount savedLoanAccount =
                 loanAccountRepository.save(
@@ -195,8 +219,8 @@ public class LoanAccountServiceImpl implements LoanAccountService {
 
 
         /*
-         * STEP 10
-         * Build response.
+         * STEP 11
+         * Prepare response.
          */
         LoanAccountResponse response =
                 buildLoanAccountResponse(
@@ -374,6 +398,9 @@ public class LoanAccountServiceImpl implements LoanAccountService {
             int size
     ) {
 
+        /*
+         * Validate pagination.
+         */
         validatePagination(
                 page,
                 size
@@ -465,18 +492,20 @@ public class LoanAccountServiceImpl implements LoanAccountService {
                 .message(
                         "Customer loan accounts fetched successfully"
                 )
-                .data(pageResponse)
+                .data(
+                        pageResponse
+                )
                 .build();
     }
 
 
     /*
-     * Generate unique loan account number.
+     * Generate Loan Account Number.
      *
-     * dealId = 1
+     * Deal ID = 1
      * LA0000000001
      *
-     * dealId = 25
+     * Deal ID = 25
      * LA0000000025
      */
     private String generateLoanAccountNumber(
@@ -491,7 +520,7 @@ public class LoanAccountServiceImpl implements LoanAccountService {
 
 
     /*
-     * Pagination validation.
+     * Validate pagination values.
      */
     private void validatePagination(
             int page,
