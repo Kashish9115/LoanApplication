@@ -11,6 +11,7 @@ public enum LoanDealStatus {
     APPROVED,
 
 
+
     REJECTED,
 
     SANCTIONED,
