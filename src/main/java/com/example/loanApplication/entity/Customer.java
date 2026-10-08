@@ -59,7 +59,7 @@ private  Integer age;
             precision = 18,
             scale = 2
     )
-    private Double monthlyIncome;
+    private BigDecimal monthlyIncome;
 
     // New field added for Registration FOIR Validation
     // (≤ 30% of MonthlyIncome)
@@ -69,7 +69,7 @@ private  Integer age;
             scale = 2
     )
     //
-    private Double monthlyInvestment;
+    private BigDecimal monthlyInvestment;
 
     @Column(name = "IsEmailVerified", nullable = false)
     private Boolean isEmailVerified = false;

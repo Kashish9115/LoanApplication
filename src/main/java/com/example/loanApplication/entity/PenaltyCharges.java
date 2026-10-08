@@ -26,7 +26,7 @@ public class PenaltyCharges {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "LoanAccountId", nullable = false)
-  //  private LoanAccount loanAccount;
+    private LoanAccount loanAccount;
 
     @Column(name = "PenaltyAmount", precision = 18, scale = 2)
     private BigDecimal penaltyAmount;

@@ -3,6 +3,7 @@ package com.example.loanApplication.entity;
 import jakarta.persistence.*;
 import lombok.Builder;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -10,7 +11,7 @@ import java.time.LocalDateTime;
 
 @Entity
 @Data
-@Builder
+@NoArgsConstructor
 public class EmiSchedules {
 
 
