@@ -16,13 +16,16 @@ public class Customer {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "CustomerId")
-    private Long customerId;
+    private Integer customerId;
 
     @Column(name = "FirstName", nullable = false, length = 50)
     private String firstName;
 
     @Column(name = "LastName", nullable = false, length = 50)
     private String lastName;
+
+    @Column(name = "Age")
+    private  Integer age;
 
     @Column(
             name = "Email",
@@ -67,6 +70,7 @@ public class Customer {
             precision = 18,
             scale = 2
     )
+    
     private BigDecimal monthlyInvestment;
 
     @Column(name = "IsEmailVerified", nullable = false)
