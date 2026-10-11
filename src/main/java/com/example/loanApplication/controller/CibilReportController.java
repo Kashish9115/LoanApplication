@@ -1,25 +1,27 @@
-//package com.example.loanApplication.controller;
-//
-//import com.example.loanApplication.entity.Customer;
-//import lombok.AllArgsConstructor;
-//import lombok.NoArgsConstructor;
-//import lombok.RequiredArgsConstructor;
-//import org.springframework.web.bind.annotation.PathVariable;
-//import org.springframework.web.bind.annotation.PostMapping;
-//import org.springframework.web.bind.annotation.RequestMapping;
-//import org.springframework.web.bind.annotation.RestController;
-//
-//@RestController
-//@RequestMapping("/api")
-//@AllArgsConstructor
-//@RequiredArgsConstructor
-//public class CibilReportController {
-//    private  final CibilReportService cibilReportService;
-//
-//    @PostMapping("/customer/{customerId}/cibilscore")
-//    public Customer genarteCibil(@PathVariable int id){
-//        return  cibilReportService.saveCibil(id);
-//    }
-//
-//
-//}
+package com.example.loanApplication.controller;
+
+import com.example.loanApplication.dto.CibilReportDto;
+import com.example.loanApplication.apiResponse.ResponseApi;
+import com.example.loanApplication.service.CibilReportService;
+import lombok.AllArgsConstructor;
+import lombok.RequiredArgsConstructor;
+import org.springframework.web.bind.annotation.*;
+
+@RestController
+@RequestMapping("/api")
+@RequiredArgsConstructor
+public class CibilReportController {
+    private  final CibilReportService cibilReportService;
+
+    @PostMapping("/customer/{customerId}/cibilscore")
+    public ResponseApi<CibilReportDto> genarteCibil( @PathVariable("customerId") Integer customerId){
+        return  cibilReportService.generateCibil(customerId);
+    }
+
+    @GetMapping("/customer/{customerId}/cibilscore")
+        public ResponseApi<CibilReportDto> getCibilScore (@PathVariable("customerId") Integer customerId){
+            return cibilReportService.getLatestCibil(customerId);
+        }
+
+
+}
