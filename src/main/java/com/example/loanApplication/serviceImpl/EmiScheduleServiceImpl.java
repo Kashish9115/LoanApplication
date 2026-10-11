@@ -36,7 +36,14 @@ private  final LoanAccountRepository loanAccountRepo;
 
 
      List<EmiSchedules> emiSchedulesListofUser =   emiSchedulesRepo.findByLoanAccount_LoanAccountIdOrderByInstallmentNoAsc(loanAccountId);
-     return  emiSchedulesListofUser.stream().map(schedules->modelMapper.map(schedules,EmiScheduleResponseDto.class)).toList();
+    // return  emiSchedulesListofUser.stream().map(schedules->modelMapper.map(schedules,EmiScheduleResponseDto.class)).toList();
+
+
+
+        return emiSchedulesListofUser.stream()
+                .map(this::mapToResponseDto)
+                .toList();
+
     }
 
     @Override
@@ -262,15 +269,42 @@ private  final LoanAccountRepository loanAccountRepo;
         List<EmiSchedules> saveSchedules =
                 emiSchedulesRepo.saveAll(schedules);
 
+//        return saveSchedules.stream()
+//                .map(schedule ->
+//                        modelMapper.map(
+//                                schedule,
+//                                EmiScheduleResponseDto.class
+//                        )
+//                )
+//                .toList();
+
+
         return saveSchedules.stream()
-                .map(schedule ->
-                        modelMapper.map(
-                                schedule,
-                                EmiScheduleResponseDto.class
-                        )
-                )
+                .map(this::mapToResponseDto)
                 .toList();
     }
+
+
+    private EmiScheduleResponseDto mapToResponseDto(EmiSchedules schedule) {
+
+        EmiScheduleResponseDto dto = new EmiScheduleResponseDto();
+
+        dto.setEmiScheduleId(schedule.getEmiScheduleId());
+        dto.setLoanAccountId(schedule.getLoanAccount().getLoanAccountId());
+        dto.setInstallmentNo(schedule.getInstallmentNo());
+        dto.setDueDate(schedule.getDueDate());
+        dto.setPrincipalAmount(schedule.getPrincipalAmount());
+        dto.setInterestAmount(schedule.getInterestAmount());
+        dto.setOpeningBalance(schedule.getOpeningBalance());
+        dto.setClosingBalance(schedule.getClosingBalance());
+        dto.setEmi(schedule.getEmi());
+        dto.setPaymentStatus(schedule.getPaymentStatus());
+        dto.setPaidDate(schedule.getPaidDate());
+        dto.setCancellationReason(schedule.getCancellationReason());
+
+        return dto;
+    }
+
 
         @Override
         public List<EmiScheduleResponseDto> regenerateEmiSchedule (Integer loanAccountId, BigDecimal newPrincipal){
@@ -384,13 +418,36 @@ private  final LoanAccountRepository loanAccountRepo;
             List<EmiSchedules> updatedSchedules =
                     emiSchedulesRepo.saveAll(pendingSchedules);
 
+//            return updatedSchedules.stream()
+//                    .map(schedule ->
+//                            modelMapper.map(
+//                                    schedule,
+//                                    EmiScheduleResponseDto.class
+//                            )
+//                    )
+//                    .toList();
+
             return updatedSchedules.stream()
-                    .map(schedule ->
-                            modelMapper.map(
-                                    schedule,
-                                    EmiScheduleResponseDto.class
-                            )
-                    )
+                    .map(this::mapToResponseDto)
                     .toList();
+
         }
+
+
+
+
+
+
+    @Override
+    public List<EmiScheduleResponseDto> generateEmi(Integer loanAccountId) {
+
+        LoanAccount account = loanAccountRepo.findById(loanAccountId)
+                .orElseThrow(() ->
+                        new ResourceNotFoundException(
+                                "Loan account not found with id: " + loanAccountId
+                        )
+                );
+
+        return generateEmiSchedule(account);
+    }
     }

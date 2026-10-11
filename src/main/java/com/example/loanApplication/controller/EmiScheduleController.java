@@ -78,4 +78,25 @@ private final EmiScheduleService emiService;
         return ResponseEntity.ok(updatedSchedule);
     }
 
+
+    @PostMapping("/generate/{loanAccountId}")
+    public ResponseEntity<List<EmiScheduleResponseDto>> generateEmi(
+            @PathVariable Integer loanAccountId) {
+
+        return ResponseEntity.ok(
+                emiScheduleService.generateEmi(loanAccountId)
+        );
+    }
+
+
+
+//    @PostMapping("/generate/{loanAccountId}")
+//    public ResponseEntity<List<EmiScheduleResponseDto>> generateEmi(
+//            @PathVariable Integer loanAccountId) {
+//
+//        return ResponseEntity.ok(
+//                emiScheduleService.generateEmiScheduleByLoanAccountId(loanAccountId)
+//        );
+//    }
+
 }

@@ -19,7 +19,7 @@ public interface EmiScheduleService {
   //  List<EmiScheduleResponseDto> getUpcomingEmi(Integer loanAccountId);
 
      List<EmiScheduleResponseDto>  generateEmiSchedule(LoanAccount account);
-
+    List<EmiScheduleResponseDto> generateEmi(Integer loanAccountId);
 
   // void fillEmiOnDue();
 

@@ -5,6 +5,7 @@ import com.example.loanApplication.dto.LoanPaymentResponseDTO;
 import com.example.loanApplication.dto.RazorpayPaymentVerifyDto;
 
 import java.math.BigDecimal;
+import java.util.List;
 
 public interface LoanPaymentService {
 
@@ -13,7 +14,7 @@ public interface LoanPaymentService {
 //
  LoanPaymentResponseDTO verifyAndProcessEmiPayment(RazorpayPaymentVerifyDto dto);
 //
-LoanPaymentResponseDTO    getPaymentHistoryByAccountId(Integer LoanAccountId);
+List<LoanPaymentResponseDTO> getPaymentHistoryByAccountId(Integer LoanAccountId);
 
 
 }
