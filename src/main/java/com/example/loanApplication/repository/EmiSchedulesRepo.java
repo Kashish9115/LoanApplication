@@ -1,7 +1,11 @@
 package com.example.loanApplication.repository;
 
+import com.example.loanApplication.dto.EmiReminderDto;
+import com.example.loanApplication.dto.EmiScheduleResponseDto;
 import com.example.loanApplication.entity.EmiSchedules;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 
 import javax.swing.text.html.Option;
 import java.time.LocalDate;
@@ -62,4 +66,27 @@ public interface EmiSchedulesRepo  extends JpaRepository< EmiSchedules, Integer>
     List<EmiSchedules> findByLoanAccount_LoanAccountIdOrderByInstallmentNoAsc(
             Integer loanAccountId
     );
+
+  //     List<EmiScheduleResponseDto> findByDueDateAndPaymentStatus(LocalDate targetDate, String status);
+
+
+
+
+    @Query("""
+    SELECT new com.example.loanApplication.dto.EmiReminderDto(
+        e.loanAccount.customerId,
+        e.installmentNo,
+        e.dueDate,
+        e.emi,
+        e.paymentStatus
+    )
+    FROM EmiSchedules e
+    WHERE e.dueDate = :dueDate
+      AND e.paymentStatus = :status
+""")
+    List<EmiReminderDto> findEmiReminders(
+            @Param("dueDate") LocalDate dueDate,
+            @Param("status") String status
+    );
+
 }

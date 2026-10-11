@@ -2,15 +2,17 @@ package com.example.loanApplication.service;
 
 import com.example.loanApplication.dto.NotificationResponseDto;
 
+import java.util.List;
+
 public interface NotificationService {
 
-NotificationResponseDto sendNotification(Long CustomerId, String message, String emailSubject );
+NotificationResponseDto sendNotification(Integer CustomerId, String message, String emailSubject );
 
-NotificationResponseDto getCustomerNotifications(Long customerId);
+List<NotificationResponseDto> getCustomerNotifications(Integer customerId);
 
-NotificationResponseDto  markNotificationAsRead(Long notificationId);
+void  markNotificationAsRead(Integer notificationId);
 
 
- void sendEmiDueReminders();
+ //void sendEmiDueReminders();
 
 }
