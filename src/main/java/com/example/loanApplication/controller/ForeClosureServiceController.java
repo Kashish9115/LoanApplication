@@ -14,26 +14,26 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/customer")
+@RequestMapping("/api")
 @RequiredArgsConstructor
 public class ForeClosureServiceController {
 
     private  final ForeClosureService foreClosureService;
-    @GetMapping("/loanAccount/getAllActiveLoanAccount")
+    @GetMapping("/customer/loanAccount/getAllActiveLoanAccount")
     public ResponseApi<List<Integer>> getAllActiveLoanAccount(
             @RequestParam Integer customerId) {
 
         return foreClosureService.getAllActiveLoanAccounts(customerId);
     }
 
-    @GetMapping("/loanAccount/{loanAccountId}")
+    @GetMapping("/customer/loanAccount/{loanAccountId}")
     public ResponseApi<LoanAccountDetailsDto> getLoanAccountDetails(
             @PathVariable Integer loanAccountId) {
 
         return foreClosureService.getLoanAccountDetails(loanAccountId);
     }
 
-    @PostMapping("/loanAccount/{loanAccountId}/fullclosure")
+    @PostMapping("/customer/loanAccount/{loanAccountId}/fullclosure")
     public ResponseApi<ForeClosureRequest> requestFullClosure(
             @PathVariable Integer loanAccountId,
             @RequestBody FullClosureRequestDto request) {
@@ -43,7 +43,7 @@ public class ForeClosureServiceController {
                 request
         );
     }
-    @PostMapping("/loanAccount/{loanAccountId}/partialclosure")
+    @PostMapping("/customer/loanAccount/{loanAccountId}/partialclosure")
     public ResponseApi<ForeClosureRequest> requestPartialClosure(
             @PathVariable Integer loanAccountId,
             @RequestBody PartialClosureRequestDto request) {
@@ -60,6 +60,29 @@ public class ForeClosureServiceController {
 
         return foreClosureService.getCustomerForeclosureRequests(customerId);
     }
+    @GetMapping("/officer/foreclosure/requests/pending")
+    public ResponseApi<List<ForeClosureRequest>>
+    getPendingForeclosureRequests() {
+
+        return foreClosureService.getPendingForeclosureRequests();
+    }
+
+
+    @PatchMapping("/officer/foreclosure/requests/{requestId}/approve")
+    public ResponseApi<ForeClosureRequest> approveForeclosureRequest(
+            @PathVariable Integer requestId) {
+
+        return foreClosureService.approveForeclosureRequest(requestId);
+    }
+
+
+    @PatchMapping("/officer/foreclosure/requests/{requestId}/reject")
+    public ResponseApi<ForeClosureRequest> rejectForeclosureRequest(
+            @PathVariable Integer requestId) {
+
+        return foreClosureService.rejectForeclosureRequest(requestId);
+    }
+
 
 
 }

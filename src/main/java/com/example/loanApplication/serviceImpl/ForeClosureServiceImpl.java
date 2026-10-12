@@ -4,6 +4,7 @@ import com.example.loanApplication.apiResponse.ResponseApi;
 import com.example.loanApplication.dto.*;
 import com.example.loanApplication.entity.ForeClosureRequest;
 import com.example.loanApplication.entity.LoanAccount;
+import com.example.loanApplication.enumeration.ForeClosureStatus;
 import com.example.loanApplication.enumeration.LoanAccountStatus;
 import com.example.loanApplication.repository.ForeClosureRequestRepository;
 import com.example.loanApplication.repository.LoanAccountRepository;
@@ -33,20 +34,28 @@ public class ForeClosureServiceImpl implements ForeClosureService {
     @Override
     public ResponseApi<List<Integer>> getAllActiveLoanAccounts(Integer customerId) {
 
-        List<LoanAccount> loanAccounts =
-                loanAccountRepository.findByCustomerIdAndStatus(
-                        customerId,
-                        LoanAccountStatus.ACTIVE
-                );
+        log.info("Customer ID received: {}", customerId);
 
-        List<Integer> loanIds = loanAccounts.stream()
+        List<LoanAccount> allLoans =
+                loanAccountRepository.findByCustomerId(customerId);
+
+        log.info("Total loans found: {}", allLoans.size());
+
+        allLoans.forEach(loan ->
+                log.info("Loan ID: {}, Status: {}",
+                        loan.getLoanAccountId(),
+                        loan.getStatus())
+        );
+
+        List<Integer> activeLoanIds = allLoans.stream()
+                .filter(loan -> loan.getStatus() == LoanAccountStatus.ACTIVE)
                 .map(LoanAccount::getLoanAccountId)
                 .toList();
 
         return new ResponseApi<>(
                 true,
                 "Active loan accounts fetched successfully",
-                loanIds
+                activeLoanIds
         );
     }
 
@@ -365,54 +374,156 @@ public class ForeClosureServiceImpl implements ForeClosureService {
     public ResponseApi<List<CustomerForeClosureRequestDto>>
     getCustomerForeclosureRequests(Integer customerId) {
 
-        log.info("Fetching foreclosure requests for customerId: {}", customerId);
+        log.info("Fetching foreclosure requests for customerId: {}",
+                customerId);
 
+        // Step 1: Customer ke saare loan accounts fetch karo
         List<LoanAccount> loanAccounts =
                 loanAccountRepository.findByCustomerId(customerId);
 
         if (loanAccounts.isEmpty()) {
             return new ResponseApi<>(
                     true,
-                    "No foreclosure requests found",
-                    java.util.Collections.emptyList()
+                    "No loan accounts found for this customer",
+                    List.of()
             );
         }
 
+        // Step 2: Loan account IDs nikalo
         List<Integer> loanAccountIds = loanAccounts.stream()
                 .map(LoanAccount::getLoanAccountId)
                 .toList();
 
+        // Step 3: In loan accounts ki saari foreclosure requests fetch karo
         List<ForeClosureRequest> requests =
-                foreClosureRequestRepository.findByLoanAccountIdIn(
-                        loanAccountIds);
+                foreClosureRequestRepository
+                        .findByLoanAccountIdIn(loanAccountIds);
 
+        // Step 4: Loan account number ke liye mapping banao
         Map<Integer, String> loanNumbers = loanAccounts.stream()
                 .collect(Collectors.toMap(
                         LoanAccount::getLoanAccountId,
                         LoanAccount::getLoanAccountNo
                 ));
 
-        List<CustomerForeClosureRequestDto> response = requests.stream()
-                .map(request -> {
-                    CustomerForeClosureRequestDto dto =
-                            modelMapper.map(
-                                    request,
-                                    CustomerForeClosureRequestDto.class);
+        // Step 5: Entity ko DTO mein convert karo
+        List<CustomerForeClosureRequestDto> response =
+                requests.stream()
+                        .map(request -> {
+                            CustomerForeClosureRequestDto dto =
+                                    modelMapper.map(
+                                            request,
+                                            CustomerForeClosureRequestDto.class
+                                    );
 
-                    dto.setLoanAccountNo(
-                            loanNumbers.get(request.getLoanAccountId()));
+                            dto.setLoanAccountNo(
+                                    loanNumbers.get(
+                                            request.getLoanAccountId()
+                                    )
+                            );
 
-                    return dto;
-                })
-                .toList();
-
-        log.info("Found {} foreclosure requests for customerId: {}",
-                response.size(), customerId);
+                            return dto;
+                        })
+                        .toList();
 
         return new ResponseApi<>(
                 true,
-                "Customer foreclosure requests fetched successfully",
+                response.isEmpty()
+                        ? "No foreclosure requests found"
+                        : "Foreclosure requests fetched successfully",
                 response
+        );
+    }
+
+    @Override
+    public ResponseApi<List<ForeClosureRequest>>
+    getPendingForeclosureRequests() {
+
+        log.info("Fetching pending foreclosure requests");
+
+
+        List<ForeClosureRequest> requests =
+                foreClosureRequestRepository.findByStatus(
+                        ForeClosureStatus.PENDING.name()
+                );
+
+        log.info("Total pending requests found: {}", requests.size());
+
+        return new ResponseApi<>(
+                true,
+                requests.isEmpty()
+                        ? "No pending foreclosure requests found"
+                        : "Pending foreclosure requests fetched successfully",
+                requests
+        );
+    }
+
+
+    @Override
+    public ResponseApi<ForeClosureRequest> approveForeclosureRequest(
+            Integer requestId) {
+
+        log.info("Approving foreclosure request: {}", requestId);
+
+        ForeClosureRequest request =
+                foreClosureRequestRepository
+                        .findByRequestIdAndStatus(requestId, "PENDING")
+                        .orElse(null);
+
+        if (request == null) {
+            return new ResponseApi<>(
+                    false,
+                    "Pending foreclosure request not found",
+                    null
+            );
+        }
+
+        request.setStatus("APPROVED");
+        request.setApprovedDate(LocalDateTime.now());
+
+        ForeClosureRequest savedRequest =
+                foreClosureRequestRepository.save(request);
+
+        log.info("Foreclosure request {} approved successfully", requestId);
+
+        return new ResponseApi<>(
+                true,
+                "Foreclosure request approved successfully",
+                savedRequest
+        );
+    }
+
+
+    @Override
+    public ResponseApi<ForeClosureRequest> rejectForeclosureRequest(
+            Integer requestId) {
+
+        log.info("Rejecting foreclosure request: {}", requestId);
+
+        ForeClosureRequest request =
+                foreClosureRequestRepository
+                        .findByRequestIdAndStatus(requestId, "PENDING")
+                        .orElse(null);
+
+        if (request == null) {
+            return new ResponseApi<>(
+                    false,
+                    "Pending foreclosure request not found",
+                    null
+            );
+        }
+
+        request.setStatus("REJECTED");
+
+        ForeClosureRequest savedRequest =
+                foreClosureRequestRepository.save(request);
+
+        log.info("Foreclosure request {} rejected successfully", requestId);
+
+        return new ResponseApi<>(
+                true,
+                "Foreclosure request rejected successfully",
+                savedRequest
         );
     }
 
