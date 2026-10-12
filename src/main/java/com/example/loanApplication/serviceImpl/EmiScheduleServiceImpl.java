@@ -450,4 +450,34 @@ private  final LoanAccountRepository loanAccountRepo;
 
         return generateEmiSchedule(account);
     }
+
+
+
+
+
+    // copy pasted imte,zed breakdown
+
+
+
+//    @Override
+//    public EmiBreakdownDto getItemizedEmiBreakdown(Long emiScheduleId) {
+//        EmiSchedules schedule = emiSchedulesRepo.findById(emiScheduleId)
+//                .orElseThrow(() -> new ResourceNotFoundException("EMI Schedule not found: " + emiScheduleId));
+//
+//        BigDecimal bounceCharges = penaltyChargeRepository.findTotalAppliedPenaltiesByScheduleId(emiScheduleId)
+//                .orElse(BigDecimal.ZERO);
+//
+//        BigDecimal lateInterest = interestAccrualRepository.findTotalAccruedInterestByScheduleId(emiScheduleId)
+//                .orElse(BigDecimal.ZERO);
+//
+//        BigDecimal totalPayable = schedule.getEmi().add(bounceCharges).add(lateInterest);
+//
+//        return new EmiBreakdownDto(
+//                schedule.getEmiScheduleId(),
+//                schedule.getEmi(),
+//                bounceCharges,
+//                lateInterest,
+//                totalPayable
+//        );
+//    }
     }

@@ -99,4 +99,14 @@ private final EmiScheduleService emiService;
 //        );
 //    }
 
+
+
+
+
+    // itemoxzed break down ka controller method
+
+//    @GetMapping("/breakdown/{emiScheduleId}")
+//    public ResponseEntity<EmiBreakdownDto> getBreakdown(@PathVariable Long emiScheduleId) {
+//        return ResponseEntity.ok(emiService.getItemizedEmiBreakdown(emiScheduleId));
+//    }
 }
