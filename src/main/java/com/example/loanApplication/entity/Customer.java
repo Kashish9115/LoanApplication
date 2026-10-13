@@ -12,7 +12,7 @@ import java.time.LocalDateTime;
 @AllArgsConstructor
 @Builder
 public class Customer {
-//
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "CustomerId")
@@ -53,6 +53,7 @@ public class Customer {
 
     @Column(name = "EmploymentType", nullable = false, length = 50)
     private String employmentType;
+    // Government, Private Sector, Self-Employed
 
     @Column(
             name = "MonthlyIncome",
@@ -62,13 +63,14 @@ public class Customer {
     )
     private BigDecimal monthlyIncome;
 
+    // New field added for Registration FOIR Validation
+    // (≤ 30% of MonthlyIncome)
     @Column(
             name = "MonthlyInvestment",
             precision = 18,
             scale = 2
     )
     private BigDecimal monthlyInvestment;
-    //
 
     @Column(name = "IsEmailVerified", nullable = false)
     private Boolean isEmailVerified = false;
