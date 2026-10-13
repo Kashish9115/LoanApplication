@@ -44,7 +44,6 @@ public class GlobalExceptionHandler {
                 .body(response);
     }
 
-
     @ExceptionHandler(InvalidLoanDealException.class)
     public ResponseEntity<ResponseApi<Object>> handleInvalidLoanDealException(
             InvalidLoanDealException exception
@@ -90,9 +89,9 @@ public class GlobalExceptionHandler {
         return ResponseEntity
                 .status(HttpStatus.BAD_REQUEST)
                 .body(response);
-}
+    }
 
-    @ExceptionHandler(MethodArgumentNotValidException.class)
+    /*@ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<ResponseApi<Map<String, String>>> handleValidationExceptions(
             MethodArgumentNotValidException ex
     ) {
@@ -119,7 +118,7 @@ public class GlobalExceptionHandler {
                 response,
                 HttpStatus.BAD_REQUEST
         );
-    }
+    }*/
 
     // Handles validation errors
     // e.g., Investment > 30% of income, invalid input formats
@@ -180,7 +179,7 @@ public class GlobalExceptionHandler {
         );
     }
 
-    @ExceptionHandler(Exception.class)
+    /*@ExceptionHandler(Exception.class)
     public ResponseEntity<ResponseApi<Object>> handleGeneralException(
             Exception exception
     ) {
@@ -197,5 +196,5 @@ public class GlobalExceptionHandler {
         return ResponseEntity
                 .status(HttpStatus.INTERNAL_SERVER_ERROR)
                 .body(response);
-    }
+    }*/
 }

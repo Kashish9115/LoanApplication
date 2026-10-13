@@ -81,8 +81,8 @@ public class Disbursement {
     @Column(name = "DisbursementDate")
     private LocalDateTime disbursementDate;
 
-
     @Enumerated(EnumType.STRING)
     @Column(name = "Status", length = 50)
     private DisbursementStatus status;
+
 }

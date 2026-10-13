@@ -11,3 +11,4 @@ public interface TotpService {
             String totpCode
     );
 }
+

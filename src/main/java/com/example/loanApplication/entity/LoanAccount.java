@@ -69,17 +69,8 @@ public class LoanAccount {
     private LocalDateTime createdAt;
 
 
-
-
-
-
-
-
     @Column(name = "DisbursementDate")
     private LocalDate disbursementDate;
-
-
-
 
     @Column(name = "TotalPaidAmount" , nullable = true)
     private  BigDecimal totalPaidAmount;
