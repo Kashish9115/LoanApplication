@@ -17,6 +17,7 @@ public class CustomerForeClosureRequestDto {
     private String loanAccountNo;
     private String foreClosureType;
     private BigDecimal foreClosureAmount;
+    private  Integer Month;
     private String reason;
     private String status;
     private LocalDateTime requestedDate;

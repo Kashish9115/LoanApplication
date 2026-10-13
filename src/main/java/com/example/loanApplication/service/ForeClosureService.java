@@ -22,4 +22,12 @@ public interface ForeClosureService {
     ResponseApi<List<CustomerForeClosureRequestDto>>
     getCustomerForeclosureRequests(Integer customerId);
 
+    ResponseApi<List<ForeClosureRequest>>
+    getPendingForeclosureRequests();
+
+    ResponseApi<ForeClosureRequest> approveForeclosureRequest(
+            Integer requestId);
+
+    ResponseApi<ForeClosureRequest> rejectForeclosureRequest(
+            Integer requestId);
 }

@@ -45,4 +45,5 @@ public interface LoanAccountRepository
             LoanAccountStatus status
     );
     List<LoanAccount> findByCustomerId(Integer customerId);
+
 }
