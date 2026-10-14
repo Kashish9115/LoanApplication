@@ -25,76 +25,145 @@ public class PenaltySchedular {
 
     private  final EmiSchedulesRepo emiSchedulesRepo;
 
-    private  final PenaltyChargesRepo penaltyChargesRepository;
+    private  final PenaltyChargesRepo penaltyChargesRepo;
 
-    private  final InterestAccrualRepo interestAccrualRepo;
+
     private  final NotificationService notificationService;
 
-    private  final  InterestAccrualRepo interestAccrualRepository;
+    private  final  InterestAccrualRepo interestAccrualRepo;
+
+
+
+private static final BigDecimal BOUNCE_CHARGE =
+        new BigDecimal("600.00");
+
+    private static final BigDecimal DAILY_LATE_FEE =
+            new BigDecimal("1.00");
+
+
 
 
     @Scheduled(cron = "0 0 0 * * ?")
     @Transactional
     public void executeDailyPenaltyAndOverdueJob() {
+
         LocalDate today = LocalDate.now();
-        log.info("Starting Daily Penalty & Overdue Job Scheduler for Date: {}", today);
 
-        // 1. Fetch all PENDING EMI schedules where DueDate is before today
-        List<EmiSchedules> overdueSchedules = emiSchedulesRepo.findByDueDateBeforeAndPaymentStatus(today, "PENDING");
+        log.info("Starting overdue EMI job for {}", today);
 
-        if (overdueSchedules.isEmpty()) {
-            log.info("No overdue EMI schedules found for penalty processing today.");
-            return;
-        }
-
-        log.info("Found {} overdue EMI schedules to process.", overdueSchedules.size());
+        List<EmiSchedules> overdueSchedules =
+                emiSchedulesRepo.findByDueDateBeforeAndPaymentStatus(
+                        today, "PENDING"
+                );
 
         for (EmiSchedules schedule : overdueSchedules) {
 
-            // 2. Apply ₹600 Bounce Charge (if not already applied for this schedule)
-            boolean penaltyExists = penaltyChargesRepository.existsByEmiSchedule_EmiScheduleId(schedule.getEmiScheduleId());
+            if (schedule.getLoanAccount() == null
+                    || schedule.getDueDate() == null
+                    || schedule.getInstallmentNo() == null) {
+                log.warn("Skipping invalid EMI schedule: {}",
+                        schedule.getEmiScheduleId());
+                continue;
+            }
+
+            Integer scheduleId = schedule.getEmiScheduleId();
+            Integer loanAccountId =
+                    schedule.getLoanAccount().getLoanAccountId();
+            Integer installmentNo = schedule.getInstallmentNo();
+
+            // 1. Apply ₹600 only once per overdue EMI.
+            boolean penaltyExists =
+                    penaltyChargesRepo
+                            .existsByEmiSchedule_EmiScheduleId(scheduleId);
 
             if (!penaltyExists) {
+
                 PenaltyCharges penalty = new PenaltyCharges();
                 penalty.setEmiSchedule(schedule);
                 penalty.setLoanAccount(schedule.getLoanAccount());
-                penalty.setPenaltyAmount(new BigDecimal("600.00")); // Flat ₹600 Bounce Penalty
-                penalty.setReason("Auto-Applied Bounce Charge for Overdue EMI Schedule #" + schedule.getEmiScheduleId());
+                penalty.setPenaltyAmount(BOUNCE_CHARGE);
+                penalty.setReason("Bounce Charge - Overdue EMI");
                 penalty.setStatus("APPLIED");
                 penalty.setCreatedAt(LocalDateTime.now());
 
-                penaltyChargesRepository.save(penalty);
-                log.info("Applied ₹600 Bounce Charge for EMI Schedule ID: {}", schedule.getEmiScheduleId());
+                penaltyChargesRepo.save(penalty);
+
+                log.info("₹600 bounce charge applied to EMI {}", scheduleId);
             }
 
-            // 3. Calculate Daily Late Fee (₹1 * Days Overdue)
-            long daysOverdue = ChronoUnit.DAYS.between(schedule.getDueDate(), today);
-            BigDecimal lateFeeAmount = new BigDecimal(daysOverdue); // ₹1 per day
+            // 2. Record ₹1 for each overdue calendar day.
+            LocalDate accrualDate = schedule.getDueDate().plusDays(1);
+            boolean todayAccrualCreated = false;
 
-            InterestAccruals accrual = new InterestAccruals();
-            accrual.setLoanAccount(schedule.getLoanAccount());
-            accrual.setInterestAmount(lateFeeAmount);
-            accrual.setAccrualDate(LocalDateTime.now());
-            accrual.setInstallmentNo(schedule.getInstallmentNo());
-            accrual.setStatus("APPLIED");
+            while (!accrualDate.isAfter(today)) {
 
-            interestAccrualRepository.save(accrual);
-            log.info("Recorded ₹{} late interest accrual for Schedule ID: {} (Overdue days: {})",
-                    lateFeeAmount, schedule.getEmiScheduleId(), daysOverdue);
+                LocalDateTime start = accrualDate.atStartOfDay();
+                LocalDateTime end = accrualDate.plusDays(1)
+                        .atStartOfDay().minusNanos(1);
 
-            // 4. Send Automated Overdue Notification Alert to Customer
-            if (schedule.getLoanAccount() != null && schedule.getLoanAccount().getCustomerId() != null) {
-                notificationService.sendNotification(
-                        schedule.getLoanAccount().getCustomerId(),
-                        "Your EMI due on " + schedule.getDueDate() + " is overdue by " + daysOverdue +
-                                " days. Late charges of ₹600 bounce + ₹" + daysOverdue + " late fees have been applied.",
-                        "Overdue EMI Payment Alert"
-                );
+                boolean exists =
+                        interestAccrualRepo
+                                .existsByLoanAccountIdAndInstallmentNoAndAccrualDateBetween(
+                                        loanAccountId,
+                                        installmentNo,
+                                        start,
+                                        end
+                                );
+
+                if (!exists) {
+                    InterestAccruals accrual = new InterestAccruals();
+                    accrual.setLoanAccountId(loanAccountId);
+                    accrual.setInstallmentNo(installmentNo);
+                    accrual.setInterestAmount(DAILY_LATE_FEE);
+                    accrual.setAccrualDate(accrualDate.atTime(0, 0));
+                    accrual.setStatus("APPLIED");
+
+                    interestAccrualRepo.save(accrual);
+
+                    if (accrualDate.equals(today)) {
+                        todayAccrualCreated = true;
+                    }
+
+                    log.info("₹1 late fee recorded for EMI {}, date {}",
+                            scheduleId, accrualDate);
+                }
+
+                accrualDate = accrualDate.plusDays(1);
+            }
+
+            // 3. Send notification when today's late fee is newly recorded.
+            if (todayAccrualCreated) {
+
+                Integer customerId =
+                        schedule.getLoanAccount().getCustomerId();
+
+                if (customerId != null) {
+
+                    long daysOverdue = ChronoUnit.DAYS.between(
+                            schedule.getDueDate(), today
+                    );
+
+                    BigDecimal totalLateFee =
+                            DAILY_LATE_FEE.multiply(
+                                    BigDecimal.valueOf(daysOverdue)
+                            );
+
+                    notificationService.sendNotification(
+                            customerId,
+                            "Your EMI installment #"
+                                    + installmentNo
+                                    + " is overdue by "
+                                    + daysOverdue
+                                    + " days. Bounce charge: ₹600.00. "
+                                    + "Accumulated late fee: ₹"
+                                    + totalLateFee
+                                    + ". Please pay your overdue EMI.",
+                            "Overdue EMI Payment Alert"
+                    );
+                }
             }
         }
 
-        log.info("Completed Daily Penalty & Overdue Job Scheduler processing successfully.");
+        log.info("Overdue EMI job completed.");
     }
-
-
 }

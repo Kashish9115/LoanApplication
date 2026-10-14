@@ -22,4 +22,7 @@ public class RazorpayOrderResponseDto {
     // Domain & Application Context Attributes
     private String currency;
     private BigDecimal amount;
+
+    private Integer emiScheduleId;
+    private Integer loanAccountId;
 }

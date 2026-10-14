@@ -1,6 +1,8 @@
 package com.example.loanApplication.dto;
 
+import com.example.loanApplication.enumeration.PaymentStatus;
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -10,14 +12,15 @@ import java.time.LocalDateTime;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
+@Builder
 public class LoanPaymentResponseDTO {
 
 
-    private Long paymentId;            // Generated primary key from LoanPayments table [1]
-    private Long loanAccountId;
-    private Long emiScheduleId;
+    private Integer paymentId;
+    private Integer loanAccountId;
+    private Integer emiScheduleId;
     private BigDecimal paidAmount;
-    private String paymentStatus;      // e.g., "SUCCESS", "FAILED"
+    private String paymentStatus;
     private LocalDateTime paymentDate;
     private BigDecimal updatedOutstandingPrincipal;
     private BigDecimal totalPaidAmount;

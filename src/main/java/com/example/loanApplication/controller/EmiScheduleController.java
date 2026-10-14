@@ -1,112 +1,87 @@
 package com.example.loanApplication.controller;
 
+import com.example.loanApplication.dto.EmiBreakDownDto;
 import com.example.loanApplication.dto.EmiScheduleResponseDto;
+import com.example.loanApplication.dto.OverdueEmiPaymentBreakdownDto;
 import com.example.loanApplication.service.EmiScheduleService;
 import com.example.loanApplication.serviceImpl.EmiScheduleServiceImpl;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.math.BigDecimal;
 import java.util.List;
 
+@Slf4j
 @RestController
-@RequestMapping("/api/emi-schedules")
+@RequestMapping("/api/emi")
 @RequiredArgsConstructor
 public class EmiScheduleController {
 
     private final EmiScheduleService emiScheduleService;
 
-////    @PostMapping("/generate/{loanAccountId}")
-////    public ResponseEntity<List<EmiScheduleResponseDto>> generateEmi(
-////            @PathVariable Integer loanAccountId) {
-////
-////        return ResponseEntity.ok(
-////                emiScheduleService.generateEmi(loanAccountId)
-////        );
-////    }
-//
-//    @GetMapping("/loan/{loanAccountId}")
-//    public ResponseEntity<List<EmiScheduleResponseDto>> getUserEmiSchedules(
-//            @PathVariable Integer loanAccountId) {
-//
-//        return ResponseEntity.ok(
-//                emiScheduleService.getUserEmiSchedules(loanAccountId)
-//        );
-//    }
-//
-//    @GetMapping("/upcoming/{loanAccountId}")
-//    public ResponseEntity<List<EmiScheduleResponseDto>> getUpcomingEmi(
-//            @PathVariable Integer loanAccountId) {
-//
-//        return ResponseEntity.ok(
-//                emiScheduleService.getUpcomingEmi(loanAccountId)
-//        );
-//    }
-
-
-
 
 private final EmiScheduleService emiService;
 
-    /**
-     * Fetches the complete multi-month EMI repayment schedule for a customer dashboard.
-     */
-    @GetMapping("/schedule/{loanAccountId}")
-    public ResponseEntity<List<EmiScheduleResponseDto>> getEmiScheduleByAccountId(@PathVariable Integer loanAccountId) {
-        List<EmiScheduleResponseDto> schedule = emiService.generateEmiScheduleByLoanAccountId(loanAccountId);
-        return ResponseEntity.ok(schedule);
+
+@PostMapping("/generate/{loanAccountId}")
+public ResponseEntity<List<EmiScheduleResponseDto>> generateInitialSchedule(
+        @PathVariable Integer loanAccountId) {
+
+    log.info("REST request to generate initial EMI schedule for LoanAccountId: {}",
+            loanAccountId);
+
+    List<EmiScheduleResponseDto> schedules =
+            emiService.generateInitialSchedule(loanAccountId);
+
+    return ResponseEntity.ok(schedules);
+}
+
+
+    @GetMapping("/breakdown/{emiScheduleId}")
+    public ResponseEntity<EmiBreakDownDto> getEmiBreakdown(
+            @PathVariable Integer emiScheduleId) {
+
+        log.info("REST request to fetch EMI breakdown for EmiScheduleId: {}",
+                emiScheduleId);
+
+        EmiBreakDownDto breakdown =
+                emiService.getEmiBreakdown(emiScheduleId);
+
+        return ResponseEntity.ok(breakdown);
     }
 
-    /**
-     * Returns an itemized breakdown separating base EMI, bounce fees, and daily accrued interest.
-     */
-//    @GetMapping("/breakdown/{emiScheduleId}")
-//    public ResponseEntity<EmiBreakdownDTO> getItemizedEmiBreakdown(@PathVariable Long emiScheduleId) {
-//        EmiBreakdownDTO breakdown = emiService.getItemizedEmiBreakdown(emiScheduleId);
-//        return ResponseEntity.ok(breakdown);
-//    }
-
-    /**
-     * Recalculates and regenerates upcoming unpaid EMI installments after a partial foreclosure.
-     */
-    @PostMapping("/regenerate/{loanAccountId}")
-    public ResponseEntity<List<EmiScheduleResponseDto>> regenerateEmiSchedule(
+    @PostMapping("/regenerate-schedule/{loanAccountId}")
+    public ResponseEntity<List<EmiScheduleResponseDto>> regenerateScheduleOnPartialForeclosure(
             @PathVariable Integer loanAccountId,
-            @RequestParam BigDecimal newPrincipal) {
-        List<EmiScheduleResponseDto> updatedSchedule = emiService.regenerateEmiSchedule(loanAccountId, newPrincipal);
-        return ResponseEntity.ok(updatedSchedule);
+            @RequestParam BigDecimal finalSettlementAmount) {
+
+        log.info(
+                "REST request to regenerate EMI schedule on partial foreclosure for LoanAccountId: {}, Amount: {}",
+                loanAccountId,
+                finalSettlementAmount
+        );
+
+        List<EmiScheduleResponseDto> updatedSchedules =
+                emiService.regenerateScheduleOnPartialForeclosure(
+                        loanAccountId,
+                        finalSettlementAmount
+                );
+
+        return ResponseEntity.ok(updatedSchedules);
     }
 
-
-    @PostMapping("/generate/{loanAccountId}")
-    public ResponseEntity<List<EmiScheduleResponseDto>> generateEmi(
+    @GetMapping("/loan-account/{loanAccountId}/overdue-breakdown")
+    public ResponseEntity<OverdueEmiPaymentBreakdownDto>
+    getAllOverdueEmiBreakdown(
             @PathVariable Integer loanAccountId) {
 
         return ResponseEntity.ok(
-                emiScheduleService.generateEmi(loanAccountId)
+                emiScheduleService.getAllOverdueEmiBreakdown(
+                        loanAccountId
+                )
         );
     }
 
-
-
-//    @PostMapping("/generate/{loanAccountId}")
-//    public ResponseEntity<List<EmiScheduleResponseDto>> generateEmi(
-//            @PathVariable Integer loanAccountId) {
-//
-//        return ResponseEntity.ok(
-//                emiScheduleService.generateEmiScheduleByLoanAccountId(loanAccountId)
-//        );
-//    }
-
-
-
-
-
-    // itemoxzed break down ka controller method
-
-//    @GetMapping("/breakdown/{emiScheduleId}")
-//    public ResponseEntity<EmiBreakdownDto> getBreakdown(@PathVariable Long emiScheduleId) {
-//        return ResponseEntity.ok(emiService.getItemizedEmiBreakdown(emiScheduleId));
-//    }
 }

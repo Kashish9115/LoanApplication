@@ -13,6 +13,6 @@ List<NotificationResponseDto> getCustomerNotifications(Integer customerId);
 void  markNotificationAsRead(Integer notificationId);
 
 
- //void sendEmiDueReminders();
+
 
 }

@@ -2,19 +2,23 @@ package com.example.loanApplication.service;
 
 import com.example.loanApplication.dto.RazorpayOrderResponseDto;
 
-import java.math.BigDecimal;
-
 public interface RazorpayService {
 
 
+    RazorpayOrderResponseDto createOrderForEmiSchedule(Integer emiScheduleId);
 
-    /**
-     * Communicates with Razorpay REST API to generate a payment order_id.
-     */
-    RazorpayOrderResponseDto createOrder(BigDecimal amount, String currency);
 
-    /**
-     * Cryptographically validates HMAC-SHA256 payment signature returned by frontend modal.
-     */
+  //  RazorpayOrderResponseDto createOrder(BigDecimal amount, String currency);
+
+
     boolean verifySignature(String orderId, String paymentId, String signature);
+
+
+
+
+
+
+    RazorpayOrderResponseDto createOrderForOverdueEmis(
+            Integer loanAccountId
+    );
 }

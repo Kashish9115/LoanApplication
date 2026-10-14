@@ -12,10 +12,7 @@ public interface PenaltyService {
 
 
 
-  PenaltyChargesResponseDto applyBounceCharge(Integer emiScheduleId, BigDecimal bounceAmount);
-   InterestAccrualResponseDTO calculateDailyLateInterest(Integer loanAccountId, int daysOverdue);
 
-   PenaltyChargesRequestDto waivePenaltyCharge(Integer penaltyChargeId, Long ticketId);
 
    List<PenaltyChargesResponseDto> getPenaltiesByAccountId(Integer LoanAccountId);
 
