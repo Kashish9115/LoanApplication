@@ -45,8 +45,7 @@ public class LoanDealController {
             @PathVariable Integer dealId
     ) {
 
-        ResponseApi<LoanDealResponse> response =
-                loanDealService.getLoanDealById(dealId);
+        ResponseApi<LoanDealResponse> response = loanDealService.getLoanDealById(dealId);
 
         return ResponseEntity.ok(response);
     }
