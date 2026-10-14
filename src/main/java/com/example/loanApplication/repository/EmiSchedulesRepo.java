@@ -63,6 +63,12 @@ public interface EmiSchedulesRepo  extends JpaRepository< EmiSchedules, Integer>
             String paymentStatus
     );
 
+
+
+    /**
+     * 3. Loan Account ID ke base par saare EMI schedules installment number wise fetch karne ke liye
+     * Used in: Customer/Officer Dashboard EMI Schedule View
+     */
     List<EmiSchedules> findByLoanAccount_LoanAccountIdOrderByInstallmentNoAsc(
             Integer loanAccountId
     );
@@ -89,4 +95,15 @@ public interface EmiSchedulesRepo  extends JpaRepository< EmiSchedules, Integer>
             @Param("status") String status
     );
 
-}
+
+
+    /**
+     * 2. Daily Scheduler Job ke liye: Aaj ki date se pehle ki sabhi PENDING overdue EMIs fetch karta hai
+     * Used in: PenaltySchedulerJob (Raat 12 baje auto-run hone waale cron job mein)
+     */
+    List<EmiSchedules> findByDueDateBeforeAndPaymentStatus(LocalDate dueDate, String paymentStatus);
+
+
+
+
+ }
