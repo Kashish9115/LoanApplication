@@ -1,9 +1,6 @@
 package com.example.loanApplication.serviceImpl;
 
-import com.example.loanApplication.dto.EmiBreakDownDto;
-import com.example.loanApplication.dto.ForeClosurePaymentRequestDto;
-import com.example.loanApplication.dto.LoanPaymentRequestDTO;
-import com.example.loanApplication.dto.LoanPaymentResponseDTO;
+import com.example.loanApplication.dto.*;
 import com.example.loanApplication.entity.*;
 import com.example.loanApplication.enumeration.LoanAccountStatus;
 import com.example.loanApplication.enumeration.PaymentStatus;
@@ -19,6 +16,11 @@ import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.modelmapper.ModelMapper;
+import org.springframework.boot.data.autoconfigure.web.DataWebProperties;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
@@ -39,14 +41,50 @@ public class LoanPaymentServiceImpl implements LoanPaymentService {
     private  final NotificationService notificationService;
   private  final ForeClosureRequestRepository foreClosureRequestRepository;
 private  final ModelMapper modelMapper;
+
+
+//@Override
+//    public PageResponse<LoanPaymentResponseDTO> getPaymentHistoryByAccountId(Integer LoanAccountId , int page , int size) {
+//
+//        List<LoanPayments> loanpayments = loanPaymentRepository.findByLoanAccountIdOrderByPaymentDateDesc(LoanAccountId);
+//
+//
+//        return  loanpayments.stream().map(paymentHistory->modelMapper.map(paymentHistory, LoanPaymentResponseDTO.class)).toList();
+//    }
+
+
+
     @Override
-    public List<LoanPaymentResponseDTO> getPaymentHistoryByAccountId(Integer LoanAccountId) {
+    public PageResponse<LoanPaymentResponseDTO> getPaymentHistoryByAccountId(
+            Integer loanAccountId, int page, int size) {
 
-        List<LoanPayments> loanpayments = loanPaymentRepository.findByLoanAccountIdOrderByPaymentDateDesc(LoanAccountId);
+        Pageable pageable = PageRequest.of(
+                page,
+                size,
+                Sort.by("paymentDate").descending()
+        );
 
+        Page<LoanPayments> payments =
+                loanPaymentRepository
+                        .findByLoanAccountIdOrderByPaymentDateDesc(loanAccountId, pageable);
 
-        return  loanpayments.stream().map(paymentHistory->modelMapper.map(paymentHistory, LoanPaymentResponseDTO.class)).toList();
+        List<LoanPaymentResponseDTO> responseDto = payments.getContent()
+                .stream()
+                .map(payment -> modelMapper.map(
+                        payment, LoanPaymentResponseDTO.class))
+                .toList();
+
+        return PageResponse.<LoanPaymentResponseDTO>builder()
+                .content(responseDto)
+                .pageNumber(payments.getNumber())
+                .pageSize(payments.getSize())
+                .totalElements(payments.getTotalElements())
+                .totalPages(payments.getTotalPages())
+                .first(payments.isFirst())
+                .last(payments.isLast())
+                .build();
     }
+
 
 
     @Override
@@ -246,10 +284,16 @@ private  final ModelMapper modelMapper;
 
 
     @Override
-    public List<LoanPaymentResponseDTO> getAllPaymentsForAdmin() {
-        List<LoanPayments> payments = loanPaymentRepository.findAll();
-        return payments.stream()
-                .map(p -> modelMapper.map(p, LoanPaymentResponseDTO.class)).toList();
+    public PageResponse<LoanPaymentResponseDTO> getAllPaymentsForAdmin(int page , int size) {
+
+        Pageable pageable= PageRequest.of(page, size);
+        Page<LoanPayments> payments = loanPaymentRepository.findAll(pageable);
+        // payments.map(p -> modelMapper.map(p, LoanPaymentResponseDTO.class));
+
+ List<LoanPaymentResponseDTO>  responsedto=  payments.getContent().stream().map(p -> modelMapper.map(p, LoanPaymentResponseDTO.class)).toList();
+
+    return  PageResponse.<LoanPaymentResponseDTO>builder().content(responsedto).
+            pageNumber(payments.getNumber()).pageSize(payments.getSize()).build();
 
 
     }

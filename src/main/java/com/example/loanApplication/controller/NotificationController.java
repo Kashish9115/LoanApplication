@@ -22,9 +22,7 @@ public class NotificationController {
         return ResponseEntity.ok(notifications);
     }
 
-    /**
-     * Endpoint for the frontend to mark a notification as read when clicked.
-     */
+
     @PostMapping("/mark-read/{notificationId}")
     public ResponseEntity<String> markNotificationAsRead(@PathVariable Integer notificationId) {
         notificationService.markNotificationAsRead(notificationId);

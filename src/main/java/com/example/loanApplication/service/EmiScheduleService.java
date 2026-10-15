@@ -1,10 +1,7 @@
 package com.example.loanApplication.service;
 
 
-import com.example.loanApplication.dto.EmiBreakDownDto;
-import com.example.loanApplication.dto.EmiScheduleResponseDto;
-import com.example.loanApplication.dto.OverdueEmiPaymentBreakdownDto;
-import com.example.loanApplication.dto.PenaltyChargesRequestDto;
+import com.example.loanApplication.dto.*;
 import com.example.loanApplication.entity.LoanAccount;
 
 import java.math.BigDecimal;
@@ -28,6 +25,9 @@ public interface EmiScheduleService {
 
     OverdueEmiPaymentBreakdownDto getAllOverdueEmiBreakdown(Integer loanAccountId);
 
+
+
+    PageResponse<EmiScheduleResponseDto> getEmiScheduleByLoanAccountId(Integer loanAccountId, int page, int size);
 }
 
 

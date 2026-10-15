@@ -1,10 +1,7 @@
 package com.example.loanApplication.controller;
 
 import com.example.loanApplication.apiResponse.ResponseApi;
-import com.example.loanApplication.dto.ForeClosurePaymentRequestDto;
-import com.example.loanApplication.dto.LoanPaymentRequestDTO;
-import com.example.loanApplication.dto.LoanPaymentResponseDTO;
-import com.example.loanApplication.dto.RazorpayOrderResponseDto;
+import com.example.loanApplication.dto.*;
 import com.example.loanApplication.service.LoanPaymentService;
 import com.example.loanApplication.service.RazorpayService;
 import lombok.RequiredArgsConstructor;
@@ -54,8 +51,7 @@ public class PaymentController {
     public ResponseEntity<LoanPaymentResponseDTO> verifyAndPay(
             @RequestBody LoanPaymentRequestDTO requestDto) {
 
-        log.info("REST Request to verify payment and update ledgers for LoanAccountId: {}",
-                requestDto.getLoanAccountId());
+
 
         razorpayService.verifySignature(
                 requestDto.getRazorpayOrderId(),
@@ -74,15 +70,17 @@ public class PaymentController {
 
 
 
+
     @GetMapping("/history/customer/{loanAccountId}")
-    public ResponseEntity<List<LoanPaymentResponseDTO>> getCustomerPaymentHistory(
-            @PathVariable Integer loanAccountId) {
+    public ResponseEntity<PageResponse<LoanPaymentResponseDTO>> getCustomerPaymentHistory(
+            @PathVariable Integer loanAccountId,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size) {
 
-        log.info("REST Request to fetch payment history for LoanAccountId: {}",
-                loanAccountId);
 
-        List<LoanPaymentResponseDTO> history =
-                paymentService.getPaymentHistoryByAccountId(loanAccountId);
+        PageResponse<LoanPaymentResponseDTO> history =
+                paymentService.getPaymentHistoryByAccountId(
+                        loanAccountId, page, size);
 
         return ResponseEntity.ok(history);
     }
@@ -90,15 +88,11 @@ public class PaymentController {
 
 
 
+
     @GetMapping("/history/admin/all")
-    public ResponseEntity<List<LoanPaymentResponseDTO>> getAllPaymentsForAdmin() {
+    public ResponseEntity<PageResponse<LoanPaymentResponseDTO>> getAllPaymentsForAdmin(@RequestParam(defaultValue = "0") int page , @RequestParam(defaultValue = "5")int size) {
 
-        log.info("REST Request to fetch all payments for Admin view");
-
-        List<LoanPaymentResponseDTO> allPayments =
-                paymentService.getAllPaymentsForAdmin();
-
-        return ResponseEntity.ok(allPayments);
+        return ResponseEntity.ok(paymentService.getAllPaymentsForAdmin(page, size));
     }
 
 
@@ -119,7 +113,7 @@ public class PaymentController {
     }
 
 
-    @PostMapping("/create-order/overdue/{loanAccountId}")
+    @PostMapping("/create-order/overdueemis/{loanAccountId}")
     public ResponseEntity<RazorpayOrderResponseDto> createOverdueOrder(
             @PathVariable Integer loanAccountId) {
 

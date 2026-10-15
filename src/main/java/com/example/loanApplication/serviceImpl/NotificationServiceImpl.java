@@ -45,13 +45,10 @@ public class NotificationServiceImpl implements NotificationService {
 
     @Override
     public List<NotificationResponseDto> getCustomerNotifications(Integer customerId) {
-        List<Notifications> dashboardAlerts=notificationsRepo.findByCustomer_CustomerIdOrderByCreatedAtDesc(customerId);
+        List<Notifications> dashboardAlerts=notificationsRepo.findByCustomer_CustomerIdAndIsReadFalseOrderByCreatedAtDesc(customerId);
 
 
      return    dashboardAlerts.stream().map(alert->modelMapper.map(alert, NotificationResponseDto.class)).toList();
-
-
-
 
 
     }
