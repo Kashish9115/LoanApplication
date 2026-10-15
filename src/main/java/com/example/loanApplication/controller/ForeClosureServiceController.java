@@ -56,13 +56,13 @@ public class ForeClosureServiceController {
                 request
         );
     }
-    @GetMapping("/customer/foreclosure/requests")
-    public ResponseApi<List<CustomerForeClosureRequestDto>>
-    getCustomerForeclosureRequests(
-            @RequestParam Integer customerId) {
-
-        return foreClosureService.getCustomerForeclosureRequests(customerId);
-    }
+//    @GetMapping("/customer/foreclosure/requests")
+//    public ResponseApi<List<CustomerForeClosureRequestDto>>
+//    getCustomerForeclosureRequests(
+//            @RequestParam Integer customerId) {
+//
+//        return foreClosureService.getCustomerForeclosureRequests(customerId);
+//    }
     @GetMapping("/officer/foreclosure/requests/pending")
     public ResponseApi<List<ForeClosureRequest>>
     getPendingForeclosureRequests() {
@@ -107,15 +107,15 @@ public class ForeClosureServiceController {
 //                response
 //        );
 //    }
-//    @GetMapping("/customer/foreclosure/requests")
-//    public ResponseApi<Page<CustomerForeClosureRequestDto>>
-//    getCustomerForeclosureRequests(
-//            @RequestParam Integer customerId,
-//            @PageableDefault(size = 5, sort = "requestId",
-//                    direction = Sort.Direction.DESC)
-//            Pageable pageable) {
-//
-//        return foreClosureService
-//                .getCustomerForeclosureRequests(customerId, pageable);
-//    }
+    @GetMapping("/customer/foreclosure/requests")
+    public ResponseApi<Page<CustomerForeClosureRequestDto>>
+    getCustomerForeclosureRequests(
+            @RequestParam Integer customerId,
+            @PageableDefault(size = 5, sort = "requestId",
+                    direction = Sort.Direction.DESC)
+            Pageable pageable) {
+
+        return foreClosureService
+                .getCustomerForeclosureRequests(customerId, pageable);
+    }
 }
