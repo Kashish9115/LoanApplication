@@ -1,3 +1,5 @@
+
+
 package com.example.loanApplication.serviceImpl;
 
 import com.example.loanApplication.apiResponse.ResponseApi;
@@ -20,6 +22,8 @@ import org.springframework.transaction.annotation.Transactional;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 @Service
 @RequiredArgsConstructor
@@ -28,209 +32,113 @@ public class SanctionServiceImpl implements SanctionService {
     private final LoanDealRepository loanDealRepository;
     private final SanctionLetterRepository sanctionLetterRepository;
 
-
+    /*
+     * Generate a new sanction letter.
+     */
     @Override
     @Transactional
-    public ResponseApi<SanctionResponse> sanctionLoan(
-            Integer dealId
-    ) {
+    public ResponseApi<SanctionResponse> sanctionLoan(Integer dealId) {
 
-        /*
-         * STEP 1
-         * Find Loan Deal.
-         */
-        LoanDeal loanDeal =
-                loanDealRepository
-                        .findById(dealId)
-                        .orElseThrow(() ->
-                                new ResourceNotFoundException(
-                                        "Loan deal not found with ID: "
-                                                + dealId
-                                )
-                        );
+        LoanDeal loanDeal = loanDealRepository
+                .findById(dealId)
+                .orElseThrow(() ->
+                        new ResourceNotFoundException(
+                                "Loan deal not found with ID: " + dealId
+                        )
+                );
 
-
-        /*
-         * STEP 2
-         * Only approved deals can be sanctioned.
-         *
-         * AUTO_APPROVED -> direct approval
-         * APPROVED      -> officer approved
-         */
-        if (loanDeal.getDealStatus()
-                != LoanDealStatus.AUTO_APPROVED
-                &&
-                loanDeal.getDealStatus()
-                        != LoanDealStatus.APPROVED) {
+        // Only approved deals can be sanctioned.
+        if (loanDeal.getDealStatus() != LoanDealStatus.AUTO_APPROVED
+                && loanDeal.getDealStatus() != LoanDealStatus.APPROVED) {
 
             throw new InvalidLoanDealException(
                     "Only APPROVED or AUTO_APPROVED loan deals can be sanctioned."
             );
         }
 
-
-
-        /*
-         * STEP 3
-         * Approved amount must exist.
-         */
+        // Validate approved amount.
         if (loanDeal.getApprovedAmount() == null
-                ||
-                loanDeal.getApprovedAmount()
-                        .compareTo(BigDecimal.ZERO) <= 0) {
+                || loanDeal.getApprovedAmount()
+                .compareTo(BigDecimal.ZERO) <= 0) {
 
             throw new InvalidLoanDealException(
                     "Approved loan amount is not available for this deal."
             );
         }
 
-
-        /*
-         * STEP 4
-         * Tenure must be valid.
-         */
+        // Validate tenure.
         if (loanDeal.getTenureMonths() == null
-                ||
-                loanDeal.getTenureMonths() <= 0) {
+                || loanDeal.getTenureMonths() <= 0) {
 
             throw new InvalidLoanDealException(
                     "Valid loan tenure is required before sanction."
             );
         }
 
-
-        /*
-         * STEP 5
-         * Determine interest rate according to loan type.
-         *
-         * HOME_LOAN    = 15%
-         * VEHICLE_LOAN = 10%
-         */
+        // Calculate interest rate according to loan type.
         BigDecimal interestRate =
-                getInterestRate(
-                        loanDeal.getLoanType()
-                );
+                getInterestRate(loanDeal.getLoanType());
 
+        // Calculate monthly EMI.
+        BigDecimal emiAmount = calculateEmi(
+                loanDeal.getApprovedAmount(),
+                interestRate,
+                loanDeal.getTenureMonths()
+        );
 
-        /*
-         * STEP 6
-         * Calculate EMI.
-         */
-        BigDecimal emiAmount =
-                calculateEmi(
-                        loanDeal.getApprovedAmount(),
-                        interestRate,
-                        loanDeal.getTenureMonths()
-                );
-
-
-        /*
-         * STEP 7
-         * Create sanction letter.
-         */
-        SanctionLetter sanctionLetter =
-                SanctionLetter.builder()
-                        .dealId(
-                                loanDeal.getDealId()
-                        )
-                        .loanAmount(
-                                loanDeal.getApprovedAmount()
-                        )
-                        .interestRate(
-                                interestRate
-                        )
-                        .tenureMonths(
-                                loanDeal.getTenureMonths()
-                        )
-                        .emiAmount(
-                                emiAmount
-                        )
-                        .createdAt(
-                                LocalDateTime.now()
-                        )
-                        .build();
-
+        // Create sanction letter.
+        SanctionLetter sanctionLetter = SanctionLetter.builder()
+                .dealId(loanDeal.getDealId())
+                .loanAmount(loanDeal.getApprovedAmount())
+                .interestRate(interestRate)
+                .tenureMonths(loanDeal.getTenureMonths())
+                .emiAmount(emiAmount)
+                .createdAt(LocalDateTime.now())
+                .build();
 
         SanctionLetter savedSanctionLetter =
-                sanctionLetterRepository.save(
-                        sanctionLetter
-                );
+                sanctionLetterRepository.save(sanctionLetter);
 
-
-        /*
-         * STEP 8
-         * Update LoanDeal.
-         */
-        loanDeal.setInterestRate(
-                interestRate
-        );
-
-        loanDeal.setEmiAmount(
-                emiAmount
-        );
-
-        loanDeal.setDealStatus(
-                LoanDealStatus.SANCTIONED
-        );
-
+        // Update the existing loan deal.
+        loanDeal.setInterestRate(interestRate);
+        loanDeal.setEmiAmount(emiAmount);
+        loanDeal.setDealStatus(LoanDealStatus.SANCTIONED);
 
         LoanDeal updatedLoanDeal =
-                loanDealRepository.save(
-                        loanDeal
-                );
+                loanDealRepository.save(loanDeal);
 
+        SanctionResponse response = buildSanctionResponse(
+                savedSanctionLetter,
+                updatedLoanDeal,
+                "Loan sanctioned successfully"
+        );
 
-        /*
-         * STEP 9
-         * Prepare response.
-         */
-        SanctionResponse response =
-                buildSanctionResponse(
-                        savedSanctionLetter,
-                        updatedLoanDeal,
-                        "Loan sanctioned successfully"
-                );
-
-
-        return ResponseApi
-                .<SanctionResponse>builder()
+        return ResponseApi.<SanctionResponse>builder()
                 .success(true)
-                .message(
-                        "Loan sanctioned successfully"
-                )
+                .message("Loan sanctioned successfully")
                 .data(response)
                 .build();
     }
 
-
+    /*
+     * Fetch the latest sanction letter for a deal.
+     */
     @Override
     @Transactional(readOnly = true)
     public ResponseApi<SanctionResponse> getSanctionByDealId(
-            Integer dealId
-    ) {
+            Integer dealId) {
 
-        /*
-         * First verify loan deal exists.
-         */
-        LoanDeal loanDeal =
-                loanDealRepository
-                        .findById(dealId)
-                        .orElseThrow(() ->
-                                new ResourceNotFoundException(
-                                        "Loan deal not found with ID: "
-                                                + dealId
-                                )
-                        );
+        LoanDeal loanDeal = loanDealRepository
+                .findById(dealId)
+                .orElseThrow(() ->
+                        new ResourceNotFoundException(
+                                "Loan deal not found with ID: " + dealId
+                        )
+                );
 
-
-        /*
-         * Get latest sanction letter for deal.
-         */
         SanctionLetter sanctionLetter =
                 sanctionLetterRepository
-                        .findTopByDealIdOrderBySanctionIdDesc(
-                                dealId
-                        )
+                        .findTopByDealIdOrderBySanctionIdDesc(dealId)
                         .orElseThrow(() ->
                                 new ResourceNotFoundException(
                                         "Sanction letter not found for deal: "
@@ -238,35 +146,27 @@ public class SanctionServiceImpl implements SanctionService {
                                 )
                         );
 
+        SanctionResponse response = buildSanctionResponse(
+                sanctionLetter,
+                loanDeal,
+                "Sanction details fetched successfully"
+        );
 
-        SanctionResponse response =
-                buildSanctionResponse(
-                        sanctionLetter,
-                        loanDeal,
-                        "Sanction details fetched successfully"
-                );
-
-
-        return ResponseApi
-                .<SanctionResponse>builder()
+        return ResponseApi.<SanctionResponse>builder()
                 .success(true)
-                .message(
-                        "Sanction details fetched successfully"
-                )
+                .message("Sanction details fetched successfully")
                 .data(response)
                 .build();
     }
 
-
+    /*
+     * Fetch one sanction letter using its sanction ID.
+     */
     @Override
     @Transactional(readOnly = true)
     public ResponseApi<SanctionResponse> getSanctionById(
-            Integer sanctionId
-    ) {
+            Integer sanctionId) {
 
-        /*
-         * Find sanction letter.
-         */
         SanctionLetter sanctionLetter =
                 sanctionLetterRepository
                         .findById(sanctionId)
@@ -277,190 +177,142 @@ public class SanctionServiceImpl implements SanctionService {
                                 )
                         );
 
-
-        /*
-         * Find associated loan deal.
-         */
-        LoanDeal loanDeal =
-                loanDealRepository
-                        .findById(
-                                sanctionLetter.getDealId()
+        LoanDeal loanDeal = loanDealRepository
+                .findById(sanctionLetter.getDealId())
+                .orElseThrow(() ->
+                        new ResourceNotFoundException(
+                                "Loan deal not found with ID: "
+                                        + sanctionLetter.getDealId()
                         )
-                        .orElseThrow(() ->
-                                new ResourceNotFoundException(
-                                        "Loan deal not found with ID: "
-                                                + sanctionLetter.getDealId()
-                                )
-                        );
-
-
-        SanctionResponse response =
-                buildSanctionResponse(
-                        sanctionLetter,
-                        loanDeal,
-                        "Sanction details fetched successfully"
                 );
 
+        SanctionResponse response = buildSanctionResponse(
+                sanctionLetter,
+                loanDeal,
+                "Sanction details fetched successfully"
+        );
 
-        return ResponseApi
-                .<SanctionResponse>builder()
+        return ResponseApi.<SanctionResponse>builder()
                 .success(true)
-                .message(
-                        "Sanction details fetched successfully"
-                )
+                .message("Sanction details fetched successfully")
                 .data(response)
                 .build();
     }
 
+    /*
+     * NEW: Fetch all historical sanction letters.
+     * Newest sanction ID appears first.
+     */
+    @Override
+    @Transactional(readOnly = true)
+    public ResponseApi<List<SanctionResponse>> getAllSanctions() {
+
+        List<SanctionLetter> sanctionLetters =
+                sanctionLetterRepository
+                        .findAllByOrderBySanctionIdDesc();
+
+        List<SanctionResponse> responses = new ArrayList<>();
+
+        for (SanctionLetter sanctionLetter : sanctionLetters) {
+
+            LoanDeal loanDeal = loanDealRepository
+                    .findById(sanctionLetter.getDealId())
+                    .orElseThrow(() ->
+                            new ResourceNotFoundException(
+                                    "Loan deal not found for sanction ID: "
+                                            + sanctionLetter.getSanctionId()
+                            )
+                    );
+
+            SanctionResponse response = buildSanctionResponse(
+                    sanctionLetter,
+                    loanDeal,
+                    "Sanction details fetched successfully"
+            );
+
+            responses.add(response);
+        }
+
+        return ResponseApi.<List<SanctionResponse>>builder()
+                .success(true)
+                .message("Sanction history fetched successfully")
+                .data(responses)
+                .build();
+    }
 
     /*
      * Determine annual interest rate.
      */
-    private BigDecimal getInterestRate(
-            LoanType loanType
-    ) {
+    private BigDecimal getInterestRate(LoanType loanType) {
 
         if (loanType == null) {
-
             throw new InvalidLoanDealException(
                     "Loan type is required for sanction."
             );
         }
 
-
         if (loanType == LoanType.HOME_LOAN) {
-
             return new BigDecimal("15.0000");
         }
 
-
         if (loanType == LoanType.VEHICLE_LOAN) {
-
             return new BigDecimal("10.0000");
         }
-
 
         throw new InvalidLoanDealException(
                 "Unsupported loan type: " + loanType
         );
     }
 
-
     /*
-     * EMI Formula:
-     *
-     * EMI =
-     * P × R × (1 + R)^N
-     * -----------------
-     *    (1 + R)^N - 1
-     *
-     * P = Principal / Approved Amount
-     * R = Monthly interest rate
-     * N = Number of months
+     * Calculate EMI using the existing formula.
      */
     private BigDecimal calculateEmi(
             BigDecimal principal,
             BigDecimal annualInterestRate,
-            Integer tenureMonths
-    ) {
+            Integer tenureMonths) {
 
-        double principalValue =
-                principal.doubleValue();
+        double principalValue = principal.doubleValue();
+        double annualRate = annualInterestRate.doubleValue();
 
-        double annualRate =
-                annualInterestRate.doubleValue();
+        // Convert annual percentage into monthly decimal rate.
+        double monthlyRate = annualRate / 12 / 100;
 
+        double power = Math.pow(
+                1 + monthlyRate,
+                tenureMonths
+        );
 
-        /*
-         * Convert annual percentage into
-         * monthly decimal rate.
-         *
-         * Example:
-         *
-         * 15%
-         * 15 / 12 / 100
-         * = 0.0125
-         */
-        double monthlyRate =
-                annualRate / 12 / 100;
+        double emi = principalValue
+                * monthlyRate
+                * power
+                / (power - 1);
 
-
-        /*
-         * (1 + R)^N
-         */
-        double power =
-                Math.pow(
-                        1 + monthlyRate,
-                        tenureMonths
-                );
-
-
-        /*
-         * EMI calculation.
-         */
-        double emi =
-                principalValue
-                        * monthlyRate
-                        * power
-                        /
-                        (power - 1);
-
-
-        return BigDecimal
-                .valueOf(emi)
-                .setScale(
-                        2,
-                        RoundingMode.HALF_UP
-                );
+        return BigDecimal.valueOf(emi)
+                .setScale(2, RoundingMode.HALF_UP);
     }
 
-
     /*
-     * Convert entity data into DTO response.
+     * Convert entity data into the existing response DTO.
      */
     private SanctionResponse buildSanctionResponse(
             SanctionLetter sanctionLetter,
             LoanDeal loanDeal,
-            String message
-    ) {
+            String message) {
 
         return SanctionResponse.builder()
-                .sanctionId(
-                        sanctionLetter.getSanctionId()
-                )
-                .dealId(
-                        loanDeal.getDealId()
-                )
-                .customerId(
-                        loanDeal.getCustomerId()
-                )
-                .loanType(
-                        loanDeal.getLoanType()
-                )
-                .approvedLoanAmount(
-                        sanctionLetter.getLoanAmount()
-                )
-                .interestRate(
-                        sanctionLetter.getInterestRate()
-                )
-                .tenureMonths(
-                        sanctionLetter.getTenureMonths()
-                )
-                .emiAmount(
-                        sanctionLetter.getEmiAmount()
-                )
-                .emiDay(
-                        loanDeal.getEmiDay()
-                )
-                .dealStatus(
-                        loanDeal.getDealStatus()
-                )
-                .createdAt(
-                        sanctionLetter.getCreatedAt()
-                )
-                .message(
-                        message
-                )
+                .sanctionId(sanctionLetter.getSanctionId())
+                .dealId(loanDeal.getDealId())
+                .customerId(loanDeal.getCustomerId())
+                .loanType(loanDeal.getLoanType())
+                .approvedLoanAmount(sanctionLetter.getLoanAmount())
+                .interestRate(sanctionLetter.getInterestRate())
+                .tenureMonths(sanctionLetter.getTenureMonths())
+                .emiAmount(sanctionLetter.getEmiAmount())
+                .emiDay(loanDeal.getEmiDay())
+                .dealStatus(loanDeal.getDealStatus())
+                .createdAt(sanctionLetter.getCreatedAt())
+                .message(message)
                 .build();
     }
 }

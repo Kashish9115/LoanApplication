@@ -1,3 +1,4 @@
+
 package com.example.loanApplication.controller;
 
 import com.example.loanApplication.apiResponse.ResponseApi;
@@ -27,67 +28,67 @@ public class LoanDealController {
 
     private final LoanDealService loanDealService;
 
-
+    // Create loan deal
     @PostMapping
     public ResponseEntity<ResponseApi<LoanDealResponse>> createLoanDeal(
             @Valid @RequestBody LoanDealRequest request
     ) {
-
         ResponseApi<LoanDealResponse> response =
                 loanDealService.createLoanDeal(request);
 
         return ResponseEntity.ok(response);
     }
 
-
+    // Get loan deal by ID
     @GetMapping("/{dealId}")
     public ResponseEntity<ResponseApi<LoanDealResponse>> getLoanDealById(
             @PathVariable Integer dealId
     ) {
-
-        ResponseApi<LoanDealResponse> response = loanDealService.getLoanDealById(dealId);
+        ResponseApi<LoanDealResponse> response =
+                loanDealService.getLoanDealById(dealId);
 
         return ResponseEntity.ok(response);
     }
 
-
+    // Get latest loan deal by customer
     @GetMapping("/customer/{customerId}/latest")
     public ResponseEntity<ResponseApi<LoanDealResponse>>
     getLatestLoanDealByCustomer(
             @PathVariable Integer customerId
     ) {
-
         ResponseApi<LoanDealResponse> response =
-                loanDealService.getLatestLoanDealByCustomer(
-                        customerId
-                );
+                loanDealService.getLatestLoanDealByCustomer(customerId);
 
         return ResponseEntity.ok(response);
     }
 
-
+    // Get paginated loan deals by customer
     @GetMapping("/customer/{customerId}")
     public ResponseEntity<ResponseApi<PageResponse<LoanDealResponse>>>
     getLoanDealsByCustomer(
             @PathVariable Integer customerId,
-
-            @RequestParam(
-                    defaultValue = "0"
-            )
-            int page,
-
-            @RequestParam(
-                    defaultValue = "10"
-            )
-            int size
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size
     ) {
-
         ResponseApi<PageResponse<LoanDealResponse>> response =
                 loanDealService.getLoanDealsByCustomer(
                         customerId,
                         page,
                         size
                 );
+
+        return ResponseEntity.ok(response);
+    }
+
+    // Get all loan deals pending manual review
+    @GetMapping("/manual-review")
+    public ResponseEntity<ResponseApi<PageResponse<LoanDealResponse>>>
+    getManualReviewDeals(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size
+    ) {
+        ResponseApi<PageResponse<LoanDealResponse>> response =
+                loanDealService.getManualReviewDeals(page, size);
 
         return ResponseEntity.ok(response);
     }

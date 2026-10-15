@@ -1,6 +1,8 @@
+
 package com.example.loanApplication.repository;
 
 import com.example.loanApplication.entity.LoanDeal;
+import com.example.loanApplication.enumeration.LoanDealStatus;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -22,4 +24,10 @@ public interface LoanDealRepository
             Pageable pageable
     );
 
+    // Fetch loan deals pending manual review
+    Page<LoanDeal>
+    findByDealStatusOrderByDealIdDesc(
+            LoanDealStatus dealStatus,
+            Pageable pageable
+    );
 }

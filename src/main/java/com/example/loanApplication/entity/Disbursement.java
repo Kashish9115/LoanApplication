@@ -17,6 +17,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 @Entity
@@ -85,4 +86,7 @@ public class Disbursement {
     @Enumerated(EnumType.STRING)
     @Column(name = "Status", length = 50)
     private DisbursementStatus status;
+
+    @Column(name = "PlannedDisbursementDate")
+    private LocalDate plannedDisbursementDate;
 }
