@@ -94,19 +94,19 @@ public class ForeClosureServiceController {
         return foreClosureService
                 .getApprovedForeclosurePayments(customerId);
     }
-    @PostMapping("/customer/foreclosure/pay")
-    public ResponseApi<LoanPaymentResponseDTO> processForeClosurePayment(
-            @RequestBody ForeClosurePaymentRequestDto dto) {
-
-        LoanPaymentResponseDTO response =
-                foreClosureService.processForeClosurePayment(dto);
-
-        return new ResponseApi<>(
-                true,
-                "Foreclosure payment processed successfully",
-                response
-        );
-    }
+//    @PostMapping("/customer/foreclosure/pay")
+//    public ResponseApi<LoanPaymentResponseDTO> processForeClosurePayment(
+//            @RequestBody ForeClosurePaymentRequestDto dto) {
+//
+//        LoanPaymentResponseDTO response =
+//                foreClosureService.processForeClosurePayment(dto);
+//
+//        return new ResponseApi<>(
+//                true,
+//                "Foreclosure payment processed successfully",
+//                response
+//        );
+//    }
 //    @GetMapping("/customer/foreclosure/requests")
 //    public ResponseApi<Page<CustomerForeClosureRequestDto>>
 //    getCustomerForeclosureRequests(
