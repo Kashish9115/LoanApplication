@@ -80,7 +80,6 @@ public interface LoanAccountRepository
             LoanAccountStatus status
     );
 
-
     // Date range filtering on LoanAccount.createdAt
     List<LoanAccount> findByCreatedAtBetween(
             LocalDateTime fromDate,
