@@ -55,6 +55,6 @@ public class LoanDealRequest {
     @Size(max = 20, message = "IFSC code cannot exceed 20 characters")
     private String ifscCode;
 
-    @NotNull(message = "Preferred disbursement date is required")
-    private LocalDate preferredDisbursementDate;
+//    @NotNull(message = "Preferred disbursement date is required")
+//    private LocalDate preferredDisbursementDate;
 }

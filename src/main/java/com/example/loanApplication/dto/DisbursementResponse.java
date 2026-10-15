@@ -1,3 +1,4 @@
+
 package com.example.loanApplication.dto;
 
 import com.example.loanApplication.enumeration.DisbursementStatus;
@@ -9,6 +10,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 @Data
@@ -37,6 +39,10 @@ public class DisbursementResponse {
 
     private LoanDealStatus dealStatus;
 
+    // Date selected by the officer.
+    private LocalDate plannedDisbursementDate;
+
+    // Actual date and time when disbursement was completed.
     private LocalDateTime disbursedAt;
 
     private String message;

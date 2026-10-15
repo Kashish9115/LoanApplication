@@ -1,3 +1,4 @@
+
 package com.example.loanApplication.service;
 
 import com.example.loanApplication.apiResponse.ResponseApi;
@@ -25,4 +26,9 @@ public interface LoanDealService {
             int size
     );
 
+    // Get loan deals pending credit officer manual review
+    ResponseApi<PageResponse<LoanDealResponse>> getManualReviewDeals(
+            int page,
+            int size
+    );
 }

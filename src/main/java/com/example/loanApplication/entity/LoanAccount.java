@@ -68,7 +68,6 @@ public class LoanAccount {
     @Column(name = "CreatedAt")
     private LocalDateTime createdAt;
 
-
     @Column(name = "DisbursementDate")
     private LocalDate disbursementDate;
 

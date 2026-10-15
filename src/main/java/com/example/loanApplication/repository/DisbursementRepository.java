@@ -2,6 +2,7 @@ package com.example.loanApplication.repository;
 
 import com.example.loanApplication.entity.Disbursement;
 
+import com.example.loanApplication.enumeration.DisbursementStatus;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -24,4 +25,7 @@ public interface DisbursementRepository
             Integer dealId,
             Pageable pageable
     );
+
+    //dashboard method
+    Long countByStatus(DisbursementStatus status);
 }

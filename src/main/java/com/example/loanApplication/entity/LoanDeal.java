@@ -10,6 +10,7 @@ import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.PrePersist;
 import jakarta.persistence.Table;
 
 import lombok.AllArgsConstructor;
@@ -19,6 +20,7 @@ import lombok.NoArgsConstructor;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "LoanDeals")
@@ -35,7 +37,6 @@ public class LoanDeal {
 
     @Column(name = "CustomerId", nullable = false)
     private Integer customerId;
-
 
     @Enumerated(EnumType.STRING)
     @Column(name = "LoanType", length = 100)
@@ -77,4 +78,12 @@ public class LoanDeal {
     @Enumerated(EnumType.STRING)
     @Column(name = "DealStatus", length = 50)
     private LoanDealStatus dealStatus;
+
+    @Column(name = "CreatedAt", updatable = false)
+    private LocalDateTime createdAt;
+
+    @PrePersist
+    protected void onCreate() {
+        this.createdAt = LocalDateTime.now();
+    }
 }

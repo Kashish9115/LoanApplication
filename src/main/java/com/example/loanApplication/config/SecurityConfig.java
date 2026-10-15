@@ -54,6 +54,8 @@ public class SecurityConfig {
 //                                .requestMatchers("/api/penalties/**").permitAll()
                                 .permitAll()
 
+                                .requestMatchers("/api/admin/**","/api/customer/**")
+                                .permitAll()
                                 .anyRequest()
                                 .authenticated()
                 )

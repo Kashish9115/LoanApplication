@@ -2,6 +2,7 @@ package com.example.loanApplication.repository;
 
 import com.example.loanApplication.entity.DealReview;
 
+import com.example.loanApplication.enumeration.ReviewStatus;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -30,4 +31,7 @@ public interface DealReviewRepository
             Integer dealId,
             Pageable pageable
     );
+
+    //dashboard method
+    Long countByStatus(ReviewStatus status);
 }

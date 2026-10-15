@@ -90,8 +90,9 @@ public class KycDocumentServiceImpl implements KycDocumentService {
     }
 
     private KycDocument required(Integer id) {
-        KycDocument d = repository.findById(id);
-        if (d == null) throw new ResourceNotFoundException("KYC document not found with id: " + id);
+        KycDocument d = repository.findById(id).orElseThrow(
+                ()-> new ResourceNotFoundException("KYC document not found with id: " + id)
+        );
         return d;
     }
 
@@ -103,4 +104,6 @@ public class KycDocumentServiceImpl implements KycDocumentService {
     private KycDocumentResponse response(KycDocument d) {
         return modelMapper.map(d, KycDocumentResponse.class);
     }
+
+
 }
