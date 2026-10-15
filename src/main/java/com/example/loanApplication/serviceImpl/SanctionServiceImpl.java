@@ -324,7 +324,7 @@ public class SanctionServiceImpl implements SanctionService {
         }
 
         log.warn("Unsupported loan type for sanction: {}", loanType);
-
+//
         throw new InvalidLoanDealException(
                 "Unsupported loan type: " + loanType
         );
