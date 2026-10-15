@@ -122,7 +122,7 @@ public class CustomerDashboardServiceImpl implements CustomerDashboardService {
         ApplicationProgressDto progressDto = null;
 
         if (!deals.isEmpty()) {
-            LoanDeal latestDeal = deals.get(deals.size() - 1);
+            LoanDeal latestDeal = deals.get(0);
             progressDto = buildApplicationProgress(latestDeal);
         }
 

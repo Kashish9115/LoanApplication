@@ -45,7 +45,7 @@ public class SecurityConfig {
                                 .requestMatchers("/api/auth/**")
                                 .permitAll()
 
-                                .requestMatchers("/api/admin/**")
+                                .requestMatchers("/api/admin/**","/api/customer/**","/api/emi-schedules/**")
                                 .permitAll()
                                 .anyRequest()
                                 .authenticated()
