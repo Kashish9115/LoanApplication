@@ -17,11 +17,11 @@ import com.example.loanApplication.repository.ScoreCardRepository;
 import com.example.loanApplication.service.LoanDealService;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
-
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -30,34 +30,51 @@ import java.util.List;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class LoanDealServiceImpl implements LoanDealService {
 
     private final LoanDealRepository loanDealRepository;
     private final EligibilityResultRepository eligibilityResultRepository;
     private final ScoreCardRepository scoreCardRepository;
 
-    // =========================================================
-    // CREATE LOAN DEAL
-    // =========================================================
     @Override
     @Transactional
     public ResponseApi<LoanDealResponse> createLoanDeal(
             LoanDealRequest request
     ) {
 
+        log.info("Starting loan deal creation for customerId: {}",
+                request.getCustomerId());
+
         EligibilityResult eligibilityResult =
                 eligibilityResultRepository
                         .findTopByCustomerIdOrderByEligibilityIdDesc(
                                 request.getCustomerId()
                         )
-                        .orElseThrow(() ->
-                                new ResourceNotFoundException(
-                                        "Eligibility result not found for customer: "
-                                                + request.getCustomerId()
-                                )
-                        );
+                        .orElseThrow(() -> {
+                            log.warn(
+                                    "Eligibility result not found for customerId: {}",
+                                    request.getCustomerId()
+                            );
+                            return new ResourceNotFoundException(
+                                    "Eligibility result not found for customer: "
+                                            + request.getCustomerId()
+                            );
+                        });
+
+        log.info(
+                "Eligibility verified for customerId: {}, eligible: {}, eligibleAmount: {}",
+                request.getCustomerId(),
+                eligibilityResult.getIsEligible(),
+                eligibilityResult.getLoanAmount()
+        );
 
         if (!Boolean.TRUE.equals(eligibilityResult.getIsEligible())) {
+            log.warn(
+                    "Loan deal creation rejected because customer is not eligible. customerId: {}",
+                    request.getCustomerId()
+            );
+
             throw new InvalidLoanDealException(
                     "Customer is not eligible for a loan."
             );
@@ -68,12 +85,22 @@ public class LoanDealServiceImpl implements LoanDealService {
                         .findTopByCustomerIdOrderByScoreCardIdDesc(
                                 request.getCustomerId()
                         )
-                        .orElseThrow(() ->
-                                new ResourceNotFoundException(
-                                        "Scorecard not found for customer: "
-                                                + request.getCustomerId()
-                                )
-                        );
+                        .orElseThrow(() -> {
+                            log.warn(
+                                    "Scorecard not found for customerId: {}",
+                                    request.getCustomerId()
+                            );
+                            return new ResourceNotFoundException(
+                                    "Scorecard not found for customer: "
+                                            + request.getCustomerId()
+                            );
+                        });
+
+        log.info(
+                "Scorecard fetched for customerId: {}, CIBIL score: {}",
+                request.getCustomerId(),
+                scoreCard.getCibilScore()
+        );
 
         validateEmiDay(request.getEmiDay());
 
@@ -81,6 +108,13 @@ public class LoanDealServiceImpl implements LoanDealService {
 
         if (request.getRequestedLoanAmount()
                 .compareTo(eligibleAmount) > 0) {
+
+            log.warn(
+                    "Requested loan amount {} exceeds eligible amount {} for customerId: {}",
+                    request.getRequestedLoanAmount(),
+                    eligibleAmount,
+                    request.getCustomerId()
+            );
 
             throw new InvalidLoanDealException(
                     "Requested loan amount cannot exceed eligible loan amount of "
@@ -94,6 +128,11 @@ public class LoanDealServiceImpl implements LoanDealService {
         BigDecimal approvedAmount = null;
 
         if (cibilScore == null) {
+            log.warn(
+                    "Loan deal creation rejected because CIBIL score is unavailable. customerId: {}",
+                    request.getCustomerId()
+            );
+
             throw new InvalidLoanDealException(
                     "CIBIL score is not available for this customer."
             );
@@ -107,10 +146,23 @@ public class LoanDealServiceImpl implements LoanDealService {
             dealStatus = LoanDealStatus.MANUAL_REVIEW;
 
         } else {
+            log.warn(
+                    "Loan deal creation rejected due to low CIBIL score. customerId: {}, score: {}",
+                    request.getCustomerId(),
+                    cibilScore
+            );
+
             throw new InvalidLoanDealException(
                     "Customer is not eligible to create loan deal."
             );
         }
+
+        log.info(
+                "Loan deal decision determined. customerId: {}, CIBIL score: {}, status: {}",
+                request.getCustomerId(),
+                cibilScore,
+                dealStatus
+        );
 
         LoanDeal loanDeal =
                 LoanDeal.builder()
@@ -131,6 +183,13 @@ public class LoanDealServiceImpl implements LoanDealService {
 
         LoanDeal savedLoanDeal = loanDealRepository.save(loanDeal);
 
+        log.info(
+                "Loan deal created successfully. dealId: {}, customerId: {}, status: {}",
+                savedLoanDeal.getDealId(),
+                savedLoanDeal.getCustomerId(),
+                savedLoanDeal.getDealStatus()
+        );
+
         LoanDealResponse response =
                 buildLoanDealResponse(
                         savedLoanDeal,
@@ -145,46 +204,54 @@ public class LoanDealServiceImpl implements LoanDealService {
                 .build();
     }
 
-    // =========================================================
-    // GET LOAN DEAL BY ID
-    // =========================================================
     @Override
     @Transactional(readOnly = true)
     public ResponseApi<LoanDealResponse> getLoanDealById(
             Integer dealId
     ) {
 
+        log.info("Fetching loan deal by dealId: {}", dealId);
+
         LoanDeal loanDeal =
                 loanDealRepository.findById(dealId)
-                        .orElseThrow(() ->
-                                new ResourceNotFoundException(
-                                        "Loan deal not found with ID: " + dealId
-                                )
-                        );
+                        .orElseThrow(() -> {
+                            log.warn("Loan deal not found. dealId: {}", dealId);
+                            return new ResourceNotFoundException(
+                                    "Loan deal not found with ID: " + dealId
+                            );
+                        });
 
         EligibilityResult eligibilityResult =
                 eligibilityResultRepository
                         .findTopByCustomerIdOrderByEligibilityIdDesc(
                                 loanDeal.getCustomerId()
                         )
-                        .orElseThrow(() ->
-                                new ResourceNotFoundException(
-                                        "Eligibility result not found for customer: "
-                                                + loanDeal.getCustomerId()
-                                )
-                        );
+                        .orElseThrow(() -> {
+                            log.warn(
+                                    "Eligibility result not found for customerId: {}",
+                                    loanDeal.getCustomerId()
+                            );
+                            return new ResourceNotFoundException(
+                                    "Eligibility result not found for customer: "
+                                            + loanDeal.getCustomerId()
+                            );
+                        });
 
         ScoreCard scoreCard =
                 scoreCardRepository
                         .findTopByCustomerIdOrderByScoreCardIdDesc(
                                 loanDeal.getCustomerId()
                         )
-                        .orElseThrow(() ->
-                                new ResourceNotFoundException(
-                                        "Scorecard not found for customer: "
-                                                + loanDeal.getCustomerId()
-                                )
-                        );
+                        .orElseThrow(() -> {
+                            log.warn(
+                                    "Scorecard not found for customerId: {}",
+                                    loanDeal.getCustomerId()
+                            );
+                            return new ResourceNotFoundException(
+                                    "Scorecard not found for customer: "
+                                            + loanDeal.getCustomerId()
+                            );
+                        });
 
         LoanDealResponse response =
                 buildLoanDealResponse(
@@ -192,6 +259,12 @@ public class LoanDealServiceImpl implements LoanDealService {
                         eligibilityResult,
                         scoreCard
                 );
+
+        log.info(
+                "Loan deal fetched successfully. dealId: {}, customerId: {}",
+                loanDeal.getDealId(),
+                loanDeal.getCustomerId()
+        );
 
         return ResponseApi.<LoanDealResponse>builder()
                 .success(true)
@@ -200,44 +273,55 @@ public class LoanDealServiceImpl implements LoanDealService {
                 .build();
     }
 
-    // =========================================================
-    // GET LATEST LOAN DEAL BY CUSTOMER
-    // =========================================================
     @Override
     @Transactional(readOnly = true)
     public ResponseApi<LoanDealResponse> getLatestLoanDealByCustomer(
             Integer customerId
     ) {
 
+        log.info("Fetching latest loan deal for customerId: {}", customerId);
+
         LoanDeal loanDeal =
                 loanDealRepository
                         .findTopByCustomerIdOrderByDealIdDesc(customerId)
-                        .orElseThrow(() ->
-                                new ResourceNotFoundException(
-                                        "Loan deal not found for customer: "
-                                                + customerId
-                                )
-                        );
+                        .orElseThrow(() -> {
+                            log.warn(
+                                    "Loan deal not found for customerId: {}",
+                                    customerId
+                            );
+                            return new ResourceNotFoundException(
+                                    "Loan deal not found for customer: "
+                                            + customerId
+                            );
+                        });
 
         EligibilityResult eligibilityResult =
                 eligibilityResultRepository
                         .findTopByCustomerIdOrderByEligibilityIdDesc(customerId)
-                        .orElseThrow(() ->
-                                new ResourceNotFoundException(
-                                        "Eligibility result not found for customer: "
-                                                + customerId
-                                )
-                        );
+                        .orElseThrow(() -> {
+                            log.warn(
+                                    "Eligibility result not found for customerId: {}",
+                                    customerId
+                            );
+                            return new ResourceNotFoundException(
+                                    "Eligibility result not found for customer: "
+                                            + customerId
+                            );
+                        });
 
         ScoreCard scoreCard =
                 scoreCardRepository
                         .findTopByCustomerIdOrderByScoreCardIdDesc(customerId)
-                        .orElseThrow(() ->
-                                new ResourceNotFoundException(
-                                        "Scorecard not found for customer: "
-                                                + customerId
-                                )
-                        );
+                        .orElseThrow(() -> {
+                            log.warn(
+                                    "Scorecard not found for customerId: {}",
+                                    customerId
+                            );
+                            return new ResourceNotFoundException(
+                                    "Scorecard not found for customer: "
+                                            + customerId
+                            );
+                        });
 
         LoanDealResponse response =
                 buildLoanDealResponse(
@@ -246,6 +330,12 @@ public class LoanDealServiceImpl implements LoanDealService {
                         scoreCard
                 );
 
+        log.info(
+                "Latest loan deal fetched successfully. dealId: {}, customerId: {}",
+                loanDeal.getDealId(),
+                customerId
+        );
+
         return ResponseApi.<LoanDealResponse>builder()
                 .success(true)
                 .message("Latest loan deal fetched successfully")
@@ -253,9 +343,6 @@ public class LoanDealServiceImpl implements LoanDealService {
                 .build();
     }
 
-    // =========================================================
-    // GET LOAN DEALS BY CUSTOMER
-    // =========================================================
     @Override
     @Transactional(readOnly = true)
     public ResponseApi<PageResponse<LoanDealResponse>> getLoanDealsByCustomer(
@@ -263,6 +350,13 @@ public class LoanDealServiceImpl implements LoanDealService {
             int page,
             int size
     ) {
+
+        log.info(
+                "Fetching loan deals for customerId: {}, page: {}, size: {}",
+                customerId,
+                page,
+                size
+        );
 
         validatePagination(page, size);
 
@@ -275,7 +369,16 @@ public class LoanDealServiceImpl implements LoanDealService {
                                 pageable
                         );
 
+        log.info(
+                "Loan deals fetched for customerId: {}, totalElements: {}, page: {}",
+                customerId,
+                loanDealPage.getTotalElements(),
+                page
+        );
+
         if (loanDealPage.isEmpty()) {
+            log.warn("No loan deals found for customerId: {}", customerId);
+
             throw new ResourceNotFoundException(
                     "No loan deals found for customer: " + customerId
             );
@@ -284,22 +387,30 @@ public class LoanDealServiceImpl implements LoanDealService {
         EligibilityResult eligibilityResult =
                 eligibilityResultRepository
                         .findTopByCustomerIdOrderByEligibilityIdDesc(customerId)
-                        .orElseThrow(() ->
-                                new ResourceNotFoundException(
-                                        "Eligibility result not found for customer: "
-                                                + customerId
-                                )
-                        );
+                        .orElseThrow(() -> {
+                            log.warn(
+                                    "Eligibility result not found for customerId: {}",
+                                    customerId
+                            );
+                            return new ResourceNotFoundException(
+                                    "Eligibility result not found for customer: "
+                                            + customerId
+                            );
+                        });
 
         ScoreCard scoreCard =
                 scoreCardRepository
                         .findTopByCustomerIdOrderByScoreCardIdDesc(customerId)
-                        .orElseThrow(() ->
-                                new ResourceNotFoundException(
-                                        "Scorecard not found for customer: "
-                                                + customerId
-                                )
-                        );
+                        .orElseThrow(() -> {
+                            log.warn(
+                                    "Scorecard not found for customerId: {}",
+                                    customerId
+                            );
+                            return new ResourceNotFoundException(
+                                    "Scorecard not found for customer: "
+                                            + customerId
+                            );
+                        });
 
         List<LoanDealResponse> content =
                 loanDealPage.getContent()
@@ -324,6 +435,13 @@ public class LoanDealServiceImpl implements LoanDealService {
                         .last(loanDealPage.isLast())
                         .build();
 
+        log.info(
+                "Loan deals response prepared for customerId: {}, returnedRecords: {}, totalElements: {}",
+                customerId,
+                content.size(),
+                loanDealPage.getTotalElements()
+        );
+
         return ResponseApi.<PageResponse<LoanDealResponse>>builder()
                 .success(true)
                 .message("Loan deals fetched successfully")
@@ -331,15 +449,18 @@ public class LoanDealServiceImpl implements LoanDealService {
                 .build();
     }
 
-    // =========================================================
-    // GET ALL DEALS PENDING MANUAL REVIEW
-    // =========================================================
     @Override
     @Transactional(readOnly = true)
     public ResponseApi<PageResponse<LoanDealResponse>> getManualReviewDeals(
             int page,
             int size
     ) {
+
+        log.info(
+                "Fetching manual review deals. page: {}, size: {}",
+                page,
+                size
+        );
 
         validatePagination(page, size);
 
@@ -351,6 +472,12 @@ public class LoanDealServiceImpl implements LoanDealService {
                         pageable
                 );
 
+        log.info(
+                "Manual review deals fetched. totalElements: {}, page: {}",
+                loanDealPage.getTotalElements(),
+                page
+        );
+
         List<LoanDealResponse> content =
                 loanDealPage.getContent()
                         .stream()
@@ -361,24 +488,32 @@ public class LoanDealServiceImpl implements LoanDealService {
                                             .findTopByCustomerIdOrderByEligibilityIdDesc(
                                                     loanDeal.getCustomerId()
                                             )
-                                            .orElseThrow(() ->
-                                                    new ResourceNotFoundException(
-                                                            "Eligibility result not found for customer: "
-                                                                    + loanDeal.getCustomerId()
-                                                    )
-                                            );
+                                            .orElseThrow(() -> {
+                                                log.warn(
+                                                        "Eligibility result not found for customerId: {}",
+                                                        loanDeal.getCustomerId()
+                                                );
+                                                return new ResourceNotFoundException(
+                                                        "Eligibility result not found for customer: "
+                                                                + loanDeal.getCustomerId()
+                                                );
+                                            });
 
                             ScoreCard scoreCard =
                                     scoreCardRepository
                                             .findTopByCustomerIdOrderByScoreCardIdDesc(
                                                     loanDeal.getCustomerId()
                                             )
-                                            .orElseThrow(() ->
-                                                    new ResourceNotFoundException(
-                                                            "Scorecard not found for customer: "
-                                                                    + loanDeal.getCustomerId()
-                                                    )
-                                            );
+                                            .orElseThrow(() -> {
+                                                log.warn(
+                                                        "Scorecard not found for customerId: {}",
+                                                        loanDeal.getCustomerId()
+                                                );
+                                                return new ResourceNotFoundException(
+                                                        "Scorecard not found for customer: "
+                                                                + loanDeal.getCustomerId()
+                                                );
+                                            });
 
                             return buildLoanDealResponse(
                                     loanDeal,
@@ -399,6 +534,12 @@ public class LoanDealServiceImpl implements LoanDealService {
                         .last(loanDealPage.isLast())
                         .build();
 
+        log.info(
+                "Manual review response prepared. returnedRecords: {}, totalElements: {}",
+                content.size(),
+                loanDealPage.getTotalElements()
+        );
+
         return ResponseApi.<PageResponse<LoanDealResponse>>builder()
                 .success(true)
                 .message("Manual review deals fetched successfully")
@@ -406,30 +547,38 @@ public class LoanDealServiceImpl implements LoanDealService {
                 .build();
     }
 
-    // =========================================================
-    // PAGINATION VALIDATION
-    // =========================================================
     private void validatePagination(int page, int size) {
 
         if (page < 0) {
+            log.warn(
+                    "Invalid pagination requested. page: {}, size: {}",
+                    page,
+                    size
+            );
+
             throw new InvalidLoanDealException(
                     "Page number cannot be negative."
             );
         }
 
         if (size <= 0 || size > 100) {
+            log.warn(
+                    "Invalid pagination requested. page: {}, size: {}",
+                    page,
+                    size
+            );
+
             throw new InvalidLoanDealException(
                     "Page size must be between 1 and 100."
             );
         }
     }
 
-    // =========================================================
-    // EMI DAY VALIDATION
-    // =========================================================
     private void validateEmiDay(Integer emiDay) {
 
         if (emiDay == null) {
+            log.warn("EMI day is missing.");
+
             throw new InvalidLoanDealException(
                     "EMI day is required."
             );
@@ -438,15 +587,14 @@ public class LoanDealServiceImpl implements LoanDealService {
         if (emiDay != 5 && emiDay != 7
                 && emiDay != 10 && emiDay != 15) {
 
+            log.warn("Invalid EMI day requested: {}", emiDay);
+
             throw new InvalidLoanDealException(
                     "EMI day must be one of: 5, 7, 10, 15."
             );
         }
     }
 
-    // =========================================================
-    // BUILD LOAN DEAL RESPONSE
-    // =========================================================
     private LoanDealResponse buildLoanDealResponse(
             LoanDeal loanDeal,
             EligibilityResult eligibilityResult,
@@ -475,9 +623,6 @@ public class LoanDealServiceImpl implements LoanDealService {
                 .build();
     }
 
-    // =========================================================
-    // CIBIL STATUS
-    // =========================================================
     private String getCibilStatus(Integer cibilScore) {
 
         if (cibilScore == null) {

@@ -23,12 +23,7 @@ public class LoanAccountController {
 
     private final LoanAccountService loanAccountService;
 
-    /*
-     * GET ALL LOAN ACCOUNTS
-     *
-     * Example:
-     * GET /api/v1/loan-accounts?page=0&size=10
-     */
+
     @GetMapping
     public ResponseEntity<ResponseApi<PageResponse<LoanAccountResponse>>>
     getAllLoanAccounts(
@@ -41,12 +36,7 @@ public class LoanAccountController {
         return ResponseEntity.ok(response);
     }
 
-    /*
-     * CREATE LOAN ACCOUNT
-     *
-     * Example:
-     * POST /api/v1/loan-accounts/deal/8
-     */
+
     @PostMapping("/deal/{dealId}")
     public ResponseEntity<ResponseApi<LoanAccountResponse>>
     createLoanAccount(
@@ -58,12 +48,7 @@ public class LoanAccountController {
         return ResponseEntity.ok(response);
     }
 
-    /*
-     * GET LOAN ACCOUNT BY ID
-     *
-     * Example:
-     * GET /api/v1/loan-accounts/8
-     */
+
     @GetMapping("/{loanAccountId}")
     public ResponseEntity<ResponseApi<LoanAccountResponse>>
     getLoanAccountById(
@@ -75,12 +60,7 @@ public class LoanAccountController {
         return ResponseEntity.ok(response);
     }
 
-    /*
-     * GET LOAN ACCOUNT BY DEAL ID
-     *
-     * Example:
-     * GET /api/v1/loan-accounts/deal/8
-     */
+
     @GetMapping("/deal/{dealId}")
     public ResponseEntity<ResponseApi<LoanAccountResponse>>
     getLoanAccountByDealId(
@@ -92,12 +72,7 @@ public class LoanAccountController {
         return ResponseEntity.ok(response);
     }
 
-    /*
-     * GET LATEST LOAN ACCOUNT FOR CUSTOMER
-     *
-     * Example:
-     * GET /api/v1/loan-accounts/customer/10/latest
-     */
+
     @GetMapping("/customer/{customerId}/latest")
     public ResponseEntity<ResponseApi<LoanAccountResponse>>
     getLatestLoanAccountByCustomerId(
@@ -111,12 +86,7 @@ public class LoanAccountController {
         return ResponseEntity.ok(response);
     }
 
-    /*
-     * GET LOAN ACCOUNTS FOR A CUSTOMER WITH PAGINATION
-     *
-     * Example:
-     * GET /api/v1/loan-accounts/customer/10?page=0&size=10
-     */
+
     @GetMapping("/customer/{customerId}")
     public ResponseEntity<
             ResponseApi<PageResponse<LoanAccountResponse>>>

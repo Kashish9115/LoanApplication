@@ -28,7 +28,7 @@ public class LoanDealController {
 
     private final LoanDealService loanDealService;
 
-    // Create loan deal
+
     @PostMapping
     public ResponseEntity<ResponseApi<LoanDealResponse>> createLoanDeal(
             @Valid @RequestBody LoanDealRequest request
@@ -39,7 +39,7 @@ public class LoanDealController {
         return ResponseEntity.ok(response);
     }
 
-    // Get loan deal by ID
+
     @GetMapping("/{dealId}")
     public ResponseEntity<ResponseApi<LoanDealResponse>> getLoanDealById(
             @PathVariable Integer dealId
@@ -50,7 +50,7 @@ public class LoanDealController {
         return ResponseEntity.ok(response);
     }
 
-    // Get latest loan deal by customer
+
     @GetMapping("/customer/{customerId}/latest")
     public ResponseEntity<ResponseApi<LoanDealResponse>>
     getLatestLoanDealByCustomer(
@@ -62,7 +62,7 @@ public class LoanDealController {
         return ResponseEntity.ok(response);
     }
 
-    // Get paginated loan deals by customer
+
     @GetMapping("/customer/{customerId}")
     public ResponseEntity<ResponseApi<PageResponse<LoanDealResponse>>>
     getLoanDealsByCustomer(
@@ -80,7 +80,7 @@ public class LoanDealController {
         return ResponseEntity.ok(response);
     }
 
-    // Get all loan deals pending manual review
+
     @GetMapping("/manual-review")
     public ResponseEntity<ResponseApi<PageResponse<LoanDealResponse>>>
     getManualReviewDeals(
