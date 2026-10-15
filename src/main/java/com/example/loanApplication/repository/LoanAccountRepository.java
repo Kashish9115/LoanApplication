@@ -46,4 +46,5 @@ public interface LoanAccountRepository
     );
     List<LoanAccount> findByCustomerId(Integer customerId);
 
+    List<Integer> findLoanAccountIdsByCustomerId(Integer customerId);
 }

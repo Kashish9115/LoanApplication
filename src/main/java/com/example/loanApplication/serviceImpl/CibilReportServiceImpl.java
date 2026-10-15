@@ -63,7 +63,9 @@ public class CibilReportServiceImpl implements CibilReportService {
 
         CibilSCoreEnum status = calculateCibilStatus(cibilScore);
 
-
+                  if(cibilScore>900){
+                      cibilScore=900;
+                  }
 
         CibilReport report = new CibilReport();
        report.setCustomerId(customerId);
@@ -93,6 +95,9 @@ public class CibilReportServiceImpl implements CibilReportService {
                         new RuntimeException(
                                 "CIBIL report not found for customer: " + customerId
                         ));
+        if(report.getCibilScore()>900){
+            report.setCibilScore(900);
+        };
 
         CibilReportDto dto = modelMapper.map(report,CibilReportDto.class);
 

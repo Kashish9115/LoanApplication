@@ -2,6 +2,8 @@ package com.example.loanApplication.repository;
 
 import com.example.loanApplication.entity.ForeClosureRequest;
 import com.example.loanApplication.enumeration.ForeClosureStatus;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
@@ -20,6 +22,14 @@ public interface ForeClosureRequestRepository
     Optional<ForeClosureRequest> findByRequestIdAndStatus(
             Integer requestId,
             String status
+    );
+    List<ForeClosureRequest> findByStatusAndIsPaid(
+            String status,
+            Boolean isPaid
+    );
+    Page<ForeClosureRequest> findByLoanAccountIdIn(
+            List<Integer> loanAccountIds,
+            Pageable pageable
     );
 
 }

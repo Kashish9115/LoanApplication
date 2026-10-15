@@ -1,13 +1,14 @@
 package com.example.loanApplication.controller;
 
 import com.example.loanApplication.apiResponse.ResponseApi;
-import com.example.loanApplication.dto.CustomerForeClosureRequestDto;
-import com.example.loanApplication.dto.FullClosureRequestDto;
-import com.example.loanApplication.dto.LoanAccountDetailsDto;
-import com.example.loanApplication.dto.PartialClosureRequestDto;
+import com.example.loanApplication.dto.*;
 import com.example.loanApplication.entity.ForeClosureRequest;
 import com.example.loanApplication.service.ForeClosureService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.web.bind.annotation.*;
 
 
@@ -15,6 +16,8 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api")
+@CrossOrigin(origins = "http://localhost:4200")
+
 @RequiredArgsConstructor
 public class ForeClosureServiceController {
 
@@ -83,6 +86,36 @@ public class ForeClosureServiceController {
         return foreClosureService.rejectForeclosureRequest(requestId);
     }
 
+    @GetMapping("/customer/foreclosure/payments")
+    public ResponseApi<List<ForeClosurePaymentDto>>
+    getApprovedForeclosurePayments(
+            @RequestParam Integer customerId) {
 
+        return foreClosureService
+                .getApprovedForeclosurePayments(customerId);
+    }
+    @PostMapping("/customer/foreclosure/pay")
+    public ResponseApi<LoanPaymentResponseDTO> processForeClosurePayment(
+            @RequestBody ForeClosurePaymentRequestDto dto) {
 
+        LoanPaymentResponseDTO response =
+                foreClosureService.processForeClosurePayment(dto);
+
+        return new ResponseApi<>(
+                true,
+                "Foreclosure payment processed successfully",
+                response
+        );
+    }
+//    @GetMapping("/customer/foreclosure/requests")
+//    public ResponseApi<Page<CustomerForeClosureRequestDto>>
+//    getCustomerForeclosureRequests(
+//            @RequestParam Integer customerId,
+//            @PageableDefault(size = 5, sort = "requestId",
+//                    direction = Sort.Direction.DESC)
+//            Pageable pageable) {
+//
+//        return foreClosureService
+//                .getCustomerForeclosureRequests(customerId, pageable);
+//    }
 }

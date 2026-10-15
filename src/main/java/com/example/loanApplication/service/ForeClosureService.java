@@ -3,7 +3,10 @@ package com.example.loanApplication.service;
 import com.example.loanApplication.apiResponse.ResponseApi;
 import com.example.loanApplication.dto.*;
 import com.example.loanApplication.entity.ForeClosureRequest;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 
+import java.math.BigDecimal;
 import java.util.List;
 
 public interface ForeClosureService {
@@ -30,4 +33,16 @@ public interface ForeClosureService {
 
     ResponseApi<ForeClosureRequest> rejectForeclosureRequest(
             Integer requestId);
+    void doneClosure(Integer requestId, BigDecimal paidAmount);
+
+    ResponseApi<List<ForeClosurePaymentDto>>
+    getApprovedForeclosurePayments(Integer customerId);
+
+//    LoanPaymentResponseDTO processForeClosurePayment(
+//            ForeClosurePaymentRequestDto dto);
+    ResponseApi<Page<CustomerForeClosureRequestDto>>
+    getCustomerForeclosureRequests(
+            Integer customerId,
+            Pageable pageable
+    );
 }
