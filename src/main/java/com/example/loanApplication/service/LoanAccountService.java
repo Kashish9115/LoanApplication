@@ -1,3 +1,4 @@
+
 package com.example.loanApplication.service;
 
 import com.example.loanApplication.apiResponse.ResponseApi;
@@ -24,6 +25,11 @@ public interface LoanAccountService {
 
     ResponseApi<PageResponse<LoanAccountResponse>> getLoanAccountsByCustomerId(
             Integer customerId,
+            int page,
+            int size
+    );
+
+    ResponseApi<PageResponse<LoanAccountResponse>> getAllLoanAccounts(
             int page,
             int size
     );

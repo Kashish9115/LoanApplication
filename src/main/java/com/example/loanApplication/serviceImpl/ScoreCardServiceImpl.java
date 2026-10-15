@@ -1,3 +1,4 @@
+
 package com.example.loanApplication.serviceImpl;
 
 import com.example.loanApplication.apiResponse.ResponseApi;
@@ -10,6 +11,7 @@ import com.example.loanApplication.repository.ScoreCardRepository;
 import com.example.loanApplication.service.ScoreCardService;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -18,12 +20,11 @@ import java.time.LocalDateTime;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class ScoreCardServiceImpl implements ScoreCardService {
 
     private final EligibilityResultRepository eligibilityResultRepository;
-
     private final ScoreCardRepository scoreCardRepository;
-
 
     @Override
     @Transactional
@@ -31,72 +32,46 @@ public class ScoreCardServiceImpl implements ScoreCardService {
             Integer customerId
     ) {
 
+        log.info(
+                "Starting scorecard generation for customerId: {}",
+                customerId
+        );
 
-        /*
-         * Step 1:
-         * Get latest eligibility result of customer.
-         */
         EligibilityResult eligibilityResult =
                 eligibilityResultRepository
                         .findTopByCustomerIdOrderByEligibilityIdDesc(customerId)
-                        .orElseThrow(() ->
-                                new ResourceNotFoundException(
-                                        "Eligibility result not found for customer: "
-                                                + customerId
-                                )
-                        );
+                        .orElseThrow(() -> {
+                            log.warn(
+                                    "Eligibility result not found for customerId: {}",
+                                    customerId
+                            );
 
+                            return new ResourceNotFoundException(
+                                    "Eligibility result not found for customer: "
+                                            + customerId
+                            );
+                        });
 
-        Integer cibilScore =
-                eligibilityResult.getCibilScore();
-
+        Integer cibilScore = eligibilityResult.getCibilScore();
 
         boolean eligible =
-                Boolean.TRUE.equals(
-                        eligibilityResult.getIsEligible()
-                );
+                Boolean.TRUE.equals(eligibilityResult.getIsEligible());
 
-
-        String cibilStatus =
-                getCibilStatus(cibilScore);
-
-
-        String riskCategory =
-                cibilStatus;
-
+        String cibilStatus = getCibilStatus(cibilScore);
+        String riskCategory = cibilStatus;
 
         String approvalType;
-
         String currentStatus;
 
         String rejectionReason =
                 eligibilityResult.getRejectionReason();
 
-
-        /*
-         * Step 2:
-         * Decide approval type.
-         *
-         * Rule:
-         *
-         * CIBIL > 800
-         *      → AUTO_APPROVED
-         *
-         * CIBIL 650 - 800
-         *      → MANUAL_REVIEW
-         *
-         * CIBIL < 650
-         *      → REJECTED
-         */
         if (!eligible || cibilScore < 650) {
 
             approvalType = "REJECTED";
-
             currentStatus = "REJECTED";
 
-
             if (rejectionReason == null) {
-
                 rejectionReason =
                         "Customer is not eligible for loan.";
             }
@@ -104,100 +79,60 @@ public class ScoreCardServiceImpl implements ScoreCardService {
         } else if (cibilScore > 800) {
 
             approvalType = "AUTO_APPROVAL";
-
             currentStatus = "AUTO_APPROVED";
 
         } else {
 
             approvalType = "MANUAL_REVIEW";
-
             currentStatus = "MANUAL_REVIEW";
         }
 
+        log.info(
+                "Scorecard decision determined for customerId: {}, status: {}, approvalType: {}",
+                customerId,
+                currentStatus,
+                approvalType
+        );
 
-        /*
-         * Step 3:
-         * Create ScoreCard entity.
-         */
         ScoreCard scoreCard =
                 ScoreCard.builder()
-                        .customerId(
-                                eligibilityResult.getCustomerId()
-                        )
-                        .currentStatus(
-                                currentStatus
-                        )
-                        .rejectionReason(
-                                rejectionReason
-                        )
-                        .appliedDate(
-                                LocalDateTime.now()
-                        )
-                        .cibilScore(
-                                cibilScore
-                        )
-                        .riskCategory(
-                                riskCategory
-                        )
+                        .customerId(eligibilityResult.getCustomerId())
+                        .currentStatus(currentStatus)
+                        .rejectionReason(rejectionReason)
+                        .appliedDate(LocalDateTime.now())
+                        .cibilScore(cibilScore)
+                        .riskCategory(riskCategory)
                         .eligibleLoanAmount(
                                 eligibilityResult.getLoanAmount()
                         )
                         .build();
 
-
-        /*
-         * Step 4:
-         * Save ScoreCard in database.
-         */
         ScoreCard savedScoreCard =
                 scoreCardRepository.save(scoreCard);
 
+        log.info(
+                "Scorecard saved successfully. scoreCardId: {}, customerId: {}",
+                savedScoreCard.getScoreCardId(),
+                customerId
+        );
 
-        /*
-         * Step 5:
-         * Convert entity to response DTO.
-         */
         ScoreCardResponse response =
                 ScoreCardResponse.builder()
-                        .scoreCardId(
-                                savedScoreCard.getScoreCardId()
-                        )
-                        .customerId(
-                                savedScoreCard.getCustomerId()
-                        )
-                        .cibilScore(
-                                savedScoreCard.getCibilScore()
-                        )
-                        .cibilStatus(
-                                cibilStatus
-                        )
-                        .riskCategory(
-                                savedScoreCard.getRiskCategory()
-                        )
+                        .scoreCardId(savedScoreCard.getScoreCardId())
+                        .customerId(savedScoreCard.getCustomerId())
+                        .cibilScore(savedScoreCard.getCibilScore())
+                        .cibilStatus(cibilStatus)
+                        .riskCategory(savedScoreCard.getRiskCategory())
                         .eligibleLoanAmount(
                                 savedScoreCard.getEligibleLoanAmount()
                         )
-                        .approvalType(
-                                approvalType
-                        )
-                        .currentStatus(
-                                savedScoreCard.getCurrentStatus()
-                        )
-                        .rejectionReason(
-                                savedScoreCard.getRejectionReason()
-                        )
-                        .appliedDate(
-                                savedScoreCard.getAppliedDate()
-                        )
+                        .approvalType(approvalType)
+                        .currentStatus(savedScoreCard.getCurrentStatus())
+                        .rejectionReason(savedScoreCard.getRejectionReason())
+                        .appliedDate(savedScoreCard.getAppliedDate())
                         .build();
 
-
-        /*
-         * Step 6:
-         * Return common response wrapper.
-         */
-        return ResponseApi
-                .<ScoreCardResponse>builder()
+        return ResponseApi.<ScoreCardResponse>builder()
                 .success(true)
                 .message(
                         currentStatus.equals("REJECTED")
@@ -208,99 +143,66 @@ public class ScoreCardServiceImpl implements ScoreCardService {
                 .build();
     }
 
-
     @Override
     @Transactional(readOnly = true)
     public ResponseApi<ScoreCardResponse> getLatestScoreCard(
             Integer customerId
     ) {
 
-        /*
-         * Step 1:
-         * Get latest scorecard.
-         */
+        log.info(
+                "Fetching latest scorecard for customerId: {}",
+                customerId
+        );
+
         ScoreCard scoreCard =
                 scoreCardRepository
-                        .findTopByCustomerIdOrderByScoreCardIdDesc(
-                                customerId
-                        )
-                        .orElseThrow(() ->
-                                new ResourceNotFoundException(
-                                        "Scorecard not found for customer: "
-                                                + customerId
-                                )
-                        );
+                        .findTopByCustomerIdOrderByScoreCardIdDesc(customerId)
+                        .orElseThrow(() -> {
+                            log.warn(
+                                    "Scorecard not found for customerId: {}",
+                                    customerId
+                            );
 
+                            return new ResourceNotFoundException(
+                                    "Scorecard not found for customer: "
+                                            + customerId
+                            );
+                        });
 
-        /*
-         * Step 2:
-         * Recreate display values from stored CIBIL score/status.
-         */
         String cibilStatus =
-                getCibilStatus(
-                        scoreCard.getCibilScore()
-                );
-
+                getCibilStatus(scoreCard.getCibilScore());
 
         String approvalType =
-                getApprovalType(
-                        scoreCard.getCibilScore()
-                );
+                getApprovalType(scoreCard.getCibilScore());
 
-
-        /*
-         * Step 3:
-         * Create response DTO.
-         */
         ScoreCardResponse response =
                 ScoreCardResponse.builder()
-                        .scoreCardId(
-                                scoreCard.getScoreCardId()
-                        )
-                        .customerId(
-                                scoreCard.getCustomerId()
-                        )
-                        .cibilScore(
-                                scoreCard.getCibilScore()
-                        )
-                        .cibilStatus(
-                                cibilStatus
-                        )
-                        .riskCategory(
-                                scoreCard.getRiskCategory()
-                        )
-                        .eligibleLoanAmount(
-                                scoreCard.getEligibleLoanAmount()
-                        )
-                        .approvalType(
-                                approvalType
-                        )
-                        .currentStatus(
-                                scoreCard.getCurrentStatus()
-                        )
-                        .rejectionReason(
-                                scoreCard.getRejectionReason()
-                        )
-                        .appliedDate(
-                                scoreCard.getAppliedDate()
-                        )
+                        .scoreCardId(scoreCard.getScoreCardId())
+                        .customerId(scoreCard.getCustomerId())
+                        .cibilScore(scoreCard.getCibilScore())
+                        .cibilStatus(cibilStatus)
+                        .riskCategory(scoreCard.getRiskCategory())
+                        .eligibleLoanAmount(scoreCard.getEligibleLoanAmount())
+                        .approvalType(approvalType)
+                        .currentStatus(scoreCard.getCurrentStatus())
+                        .rejectionReason(scoreCard.getRejectionReason())
+                        .appliedDate(scoreCard.getAppliedDate())
                         .build();
 
+        log.info(
+                "Latest scorecard fetched successfully. scoreCardId: {}, customerId: {}",
+                scoreCard.getScoreCardId(),
+                customerId
+        );
 
-        return ResponseApi
-                .<ScoreCardResponse>builder()
+        return ResponseApi.<ScoreCardResponse>builder()
                 .success(true)
-                .message(
-                        "Scorecard fetched successfully"
-                )
+                .message("Scorecard fetched successfully")
                 .data(response)
                 .build();
     }
 
-
-    private String getCibilStatus(
-            Integer cibilScore
-    ) {
+    private String getCibilStatus(Integer cibilScore) {
 
         if (cibilScore == null) {
             return "UNKNOWN";
@@ -329,10 +231,7 @@ public class ScoreCardServiceImpl implements ScoreCardService {
         return "REJECTED";
     }
 
-
-    private String getApprovalType(
-            Integer cibilScore
-    ) {
+    private String getApprovalType(Integer cibilScore) {
 
         if (cibilScore == null || cibilScore < 650) {
             return "REJECTED";

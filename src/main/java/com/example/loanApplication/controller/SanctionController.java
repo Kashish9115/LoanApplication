@@ -14,6 +14,8 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.util.List;
+
 @RestController
 @RequestMapping("/api/v1/sanctions")
 @RequiredArgsConstructor
@@ -57,5 +59,12 @@ public class SanctionController {
                 sanctionService.getSanctionById(sanctionId);
 
         return ResponseEntity.ok(response);
+    }
+
+    // New endpoint: fetch all saved sanction letters, newest first.
+    @GetMapping
+    public ResponseEntity<ResponseApi<List<SanctionResponse>>> getAllSanctions() {
+        return ResponseEntity.ok(
+                sanctionService.getAllSanctions());
     }
 }
