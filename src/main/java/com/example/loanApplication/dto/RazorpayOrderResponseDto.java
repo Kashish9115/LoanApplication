@@ -14,12 +14,9 @@ public class RazorpayOrderResponseDto {
 
 
 
-    // Razorpay Checkout Verification Attributes
-    private String razorpayOrderId;
-//    private String razorpayPaymentId;
-//    private String razorpaySignature;
 
-    // Domain & Application Context Attributes
+    private String razorpayOrderId;
+
     private String currency;
     private BigDecimal amount;
 

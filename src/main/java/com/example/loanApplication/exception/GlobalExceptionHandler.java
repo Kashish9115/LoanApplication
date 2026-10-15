@@ -179,22 +179,32 @@ public class GlobalExceptionHandler {
         );
     }
 
-    /*@ExceptionHandler(Exception.class)
-    public ResponseEntity<ResponseApi<Object>> handleGeneralException(
-            Exception exception
-    ) {
 
-        exception.printStackTrace();
 
-        ResponseApi<Object> response =
-                ResponseApi.builder()
-                        .success(false)
-                        .message(exception.getMessage())
-                        .data(null)
-                        .build();
 
-        return ResponseEntity
-                .status(HttpStatus.INTERNAL_SERVER_ERROR)
-                .body(response);
-    }*/
+    @ExceptionHandler(LoanAccountNotFoundException.class)
+    public ResponseEntity<ResponseApi<Object>> handleLoanAccountNotFoundException(LoanAccountNotFoundException ex){
+        ResponseApi<Object> responseApi = ResponseApi.builder().success(false).message(ex.getMessage()).data(null).build();
+
+        return new ResponseEntity<>(
+                responseApi, HttpStatus.NOT_FOUND
+        );
+
+    }
+
+
+
+    @ExceptionHandler(EmiScheduleNotFound.class)
+
+    public  ResponseEntity<ResponseApi<Object>> handleEmiScheduleNotFoundException(EmiScheduleNotFound es){
+
+        ResponseApi<Object> responseApi = ResponseApi.builder().success(false).message(es.getMessage()).data(null).build();
+        return  new ResponseEntity<>(
+                responseApi, HttpStatus.NOT_FOUND
+        );
+
+
+    }
+
+
 }

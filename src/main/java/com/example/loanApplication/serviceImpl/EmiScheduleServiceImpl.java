@@ -6,6 +6,8 @@ import com.example.loanApplication.entity.LoanAccount;
 //import com.example.loanApplication.service.EmailService;
 import com.example.loanApplication.entity.PenaltyCharges;
 import com.example.loanApplication.enumeration.PaymentStatus;
+import com.example.loanApplication.exception.EmiScheduleNotFound;
+import com.example.loanApplication.exception.LoanAccountNotFoundException;
 import com.example.loanApplication.exception.ResourceNotFoundException;
 import com.example.loanApplication.repository.EmiSchedulesRepo;
 import com.example.loanApplication.repository.LoanAccountRepository;
@@ -16,6 +18,10 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.modelmapper.ModelMapper;
 import org.springframework.cglib.core.Local;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
@@ -45,8 +51,7 @@ public List<EmiScheduleResponseDto> generateInitialSchedule(
         Integer loanAccountId) {
 
     LoanAccount account = loanAccountRepo.findById(loanAccountId)
-            .orElseThrow(() -> new ResourceNotFoundException(
-                    "Loan account not found: " + loanAccountId));
+            .orElseThrow(() -> new LoanAccountNotFoundException("Loan accountnot found with  account id : "+ loanAccountId));
 
     BigDecimal principal = account.getLoanAmount();
     BigDecimal annualRate = account.getInterestRate();
@@ -157,7 +162,7 @@ public List<EmiScheduleResponseDto> regenerateScheduleOnPartialForeclosure(
 
     // 1. Fetch loan account
     LoanAccount account = loanAccountRepo.findById(loanAccountId)
-            .orElseThrow(() -> new ResourceNotFoundException(
+            .orElseThrow(() -> new LoanAccountNotFoundException(
                     "Loan Account not found: " + loanAccountId));
 
     // 2. Validate remaining principal
@@ -303,7 +308,7 @@ public List<EmiScheduleResponseDto> regenerateScheduleOnPartialForeclosure(
 
         // 1. Fetch EMI schedule
         EmiSchedules schedule = emiSchedulesRepo.findById(emiScheduleId)
-                .orElseThrow(() -> new ResourceNotFoundException(
+                .orElseThrow(() -> new EmiScheduleNotFound(
                         "EMI Schedule not found for ID: " + emiScheduleId
                 ));
 
@@ -371,7 +376,7 @@ public List<EmiScheduleResponseDto> regenerateScheduleOnPartialForeclosure(
 
         // 1. Verify loan account exists
         loanAccountRepo.findById(loanAccountId)
-                .orElseThrow(() -> new ResourceNotFoundException(
+                .orElseThrow(() -> new LoanAccountNotFoundException(
                         "Loan account not found: " + loanAccountId
                 ));
 
@@ -433,4 +438,44 @@ public List<EmiScheduleResponseDto> regenerateScheduleOnPartialForeclosure(
                 .totalPayableAmount(totalPayable)
                 .build();
     }
+
+
+
+
+
+    @Override
+    public PageResponse<EmiScheduleResponseDto> getEmiScheduleByLoanAccountId(
+            Integer loanAccountId, int page, int size) {
+
+
+
+        Pageable pageable = PageRequest.of(
+                page,
+                size,
+                Sort.by("installmentNo").ascending()
+        );
+
+        Page<EmiSchedules> schedules =
+                emiSchedulesRepo
+                        .findByLoanAccount_LoanAccountIdOrderByInstallmentNoAsc(
+                                loanAccountId, pageable);
+
+        List<EmiScheduleResponseDto> content =
+                schedules.getContent()
+                        .stream()
+                        .map(emi -> modelMapper.map(
+                                emi, EmiScheduleResponseDto.class))
+                        .toList();
+
+        return PageResponse.<EmiScheduleResponseDto>builder()
+                .content(content)
+                .pageNumber(schedules.getNumber())
+                .pageSize(schedules.getSize())
+                .totalElements(schedules.getTotalElements())
+                .totalPages(schedules.getTotalPages())
+                .first(schedules.isFirst())
+                .last(schedules.isLast())
+                .build();
+    }
+
 }

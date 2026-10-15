@@ -3,6 +3,8 @@ package com.example.loanApplication.repository;
 import com.example.loanApplication.dto.EmiReminderDto;
 import com.example.loanApplication.entity.EmiSchedules;
 import jakarta.persistence.LockModeType;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Query;
@@ -16,7 +18,6 @@ import java.util.Optional;
 
 public interface EmiSchedulesRepo  extends JpaRepository< EmiSchedules, Integer> {
 
-    List<EmiSchedules> findByLoanAccount_LoanAccountIdAndPaymentStatusNotAndDueDateGreaterThanEqualOrderByDueDateAsc(Integer loanAccountId, String paid, LocalDate now);
 
 
     List<EmiSchedules>
@@ -32,7 +33,6 @@ public interface EmiSchedulesRepo  extends JpaRepository< EmiSchedules, Integer>
             Integer loanAccountId
     );
 
-  //     List<EmiScheduleResponseDto> findByDueDateAndPaymentStatus(LocalDate targetDate, String status);
 
 
 
@@ -56,10 +56,7 @@ public interface EmiSchedulesRepo  extends JpaRepository< EmiSchedules, Integer>
 
 
 
-    /**
-     * 2. Daily Scheduler Job ke liye: Aaj ki date se pehle ki sabhi PENDING overdue EMIs fetch karta hai
-     * Used in: PenaltySchedulerJob (Raat 12 baje auto-run hone waale cron job mein)
-     */
+
     List<EmiSchedules> findByDueDateBeforeAndPaymentStatus(LocalDate dueDate, String paymentStatus);
 
 
@@ -72,4 +69,11 @@ public interface EmiSchedulesRepo  extends JpaRepository< EmiSchedules, Integer>
     Optional<EmiSchedules> findByIdForUpdate(
             @Param("emiScheduleId") Integer emiScheduleId
     );
- }
+
+
+
+    Page<EmiSchedules>
+    findByLoanAccount_LoanAccountIdOrderByInstallmentNoAsc(Integer loanAccountId, Pageable pageable
+    );
+
+}

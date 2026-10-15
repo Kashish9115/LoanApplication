@@ -3,8 +3,10 @@ package com.example.loanApplication.controller;
 import com.example.loanApplication.dto.EmiBreakDownDto;
 import com.example.loanApplication.dto.EmiScheduleResponseDto;
 import com.example.loanApplication.dto.OverdueEmiPaymentBreakdownDto;
+import com.example.loanApplication.dto.PageResponse;
 import com.example.loanApplication.service.EmiScheduleService;
 import com.example.loanApplication.serviceImpl.EmiScheduleServiceImpl;
+import com.example.loanApplication.utils.PenaltySchedular;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
@@ -20,7 +22,7 @@ import java.util.List;
 public class EmiScheduleController {
 
     private final EmiScheduleService emiScheduleService;
-
+    private final PenaltySchedular penaltySchedular;
 
 private final EmiScheduleService emiService;
 
@@ -29,8 +31,6 @@ private final EmiScheduleService emiService;
 public ResponseEntity<List<EmiScheduleResponseDto>> generateInitialSchedule(
         @PathVariable Integer loanAccountId) {
 
-    log.info("REST request to generate initial EMI schedule for LoanAccountId: {}",
-            loanAccountId);
 
     List<EmiScheduleResponseDto> schedules =
             emiService.generateInitialSchedule(loanAccountId);
@@ -57,12 +57,6 @@ public ResponseEntity<List<EmiScheduleResponseDto>> generateInitialSchedule(
             @PathVariable Integer loanAccountId,
             @RequestParam BigDecimal finalSettlementAmount) {
 
-        log.info(
-                "REST request to regenerate EMI schedule on partial foreclosure for LoanAccountId: {}, Amount: {}",
-                loanAccountId,
-                finalSettlementAmount
-        );
-
         List<EmiScheduleResponseDto> updatedSchedules =
                 emiService.regenerateScheduleOnPartialForeclosure(
                         loanAccountId,
@@ -84,4 +78,32 @@ public ResponseEntity<List<EmiScheduleResponseDto>> generateInitialSchedule(
         );
     }
 
+
+
+
+    @GetMapping("/getuseremi/account/{loanAccountId}")
+    public ResponseEntity<PageResponse<EmiScheduleResponseDto>>
+    getEmiScheduleByLoanAccountId(
+            @PathVariable Integer loanAccountId,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size) {
+
+        return ResponseEntity.ok(
+                emiScheduleService.getEmiScheduleByLoanAccountId(
+                        loanAccountId, page, size)
+        );
+    }
+
+
+
+
+    @PostMapping("/run")
+    public ResponseEntity<String> runPenaltyScheduler() {
+
+        penaltySchedular.executeDailyPenaltyAndOverdueJob();
+
+        return ResponseEntity.ok(
+                "Penalty scheduler executed. Check database and application logs."
+        );
+    }
 }
