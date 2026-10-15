@@ -4,15 +4,23 @@ import com.example.loanApplication.apiResponse.ResponseApi;
 import com.example.loanApplication.dto.*;
 import com.example.loanApplication.entity.ForeClosureRequest;
 import com.example.loanApplication.entity.LoanAccount;
+import com.example.loanApplication.entity.LoanClosure;
+import com.example.loanApplication.entity.LoanPayments;
 import com.example.loanApplication.enumeration.ForeClosureStatus;
 import com.example.loanApplication.enumeration.LoanAccountStatus;
 import com.example.loanApplication.repository.ForeClosureRequestRepository;
 import com.example.loanApplication.repository.LoanAccountRepository;
+import com.example.loanApplication.repository.LoanClosureRepository;
+import com.example.loanApplication.repository.LoanPaymentRepository;
 import com.example.loanApplication.service.ForeClosureService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.modelmapper.ModelMapper;
+import org.springframework.boot.context.config.ConfigDataResourceNotFoundException;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -29,6 +37,8 @@ import java.util.stream.Collectors;
 public class ForeClosureServiceImpl implements ForeClosureService {
     private  final LoanAccountRepository loanAccountRepository;
     private  final ForeClosureRequestRepository foreClosureRequestRepository;
+   private final   LoanClosureRepository  loanClosureRepository;
+   private  final LoanPaymentRepository loanPaymentRepository;
     ModelMapper modelMapper=new ModelMapper();
 
     @Override
@@ -82,7 +92,7 @@ public class ForeClosureServiceImpl implements ForeClosureService {
                 calculateNextEmiDate(loanAccount.getEmiDay());
 
         LoanAccountDetailsDto dto = new LoanAccountDetailsDto();
-
+        dto.setCustomerId(loanAccount.getCustomerId());
         dto.setLoanAccountId(loanAccount.getLoanAccountId());
         dto.setLoanAccountNo(loanAccount.getLoanAccountNo());
         dto.setOutstandingAmount(loanAccount.getOutstandingAmount());
@@ -525,6 +535,286 @@ public class ForeClosureServiceImpl implements ForeClosureService {
                 "Foreclosure request rejected successfully",
                 savedRequest
         );
+    }
+    @Override
+    @Transactional
+    public void doneClosure(Integer requestId, BigDecimal paidAmount) {
+
+        ForeClosureRequest request = foreClosureRequestRepository
+                .findById(requestId)
+                .orElseThrow(() ->
+                        new IllegalArgumentException("Record not found"));
+
+        if (!"APPROVED".equalsIgnoreCase(request.getStatus())) {
+            throw new IllegalArgumentException(
+                    "Foreclosure request is not approved");
+        }
+
+        if (Boolean.TRUE.equals(request.getIsPaid())) {
+            throw new IllegalArgumentException(
+                    "Foreclosure request is already paid");
+        }
+
+        LoanAccount account = loanAccountRepository
+                .findById(request.getLoanAccountId())
+                .orElseThrow(null);
+
+        BigDecimal outstanding = account.getOutstandingAmount();
+
+        if (paidAmount == null
+                || paidAmount.compareTo(BigDecimal.ZERO) <= 0
+                || outstanding == null
+                || paidAmount.compareTo(outstanding) > 0) {
+            throw new IllegalArgumentException(
+                    "Invalid foreclosure payment amount");
+        }
+
+        BigDecimal remainingAmount = outstanding.subtract(paidAmount);
+
+        LoanClosure closure = new LoanClosure();
+        closure.setLoanAccountId(account.getLoanAccountId());
+        closure.setClosureType(request.getForeClosureType());
+        closure.setFinalSettlementAmount(paidAmount);
+        closure.setClosureDate(LocalDateTime.now());
+        closure.setClosedBy(request.getClosedBy());
+        closure.setClosureStatus("COMPLETED");
+
+        if ("FULL".equalsIgnoreCase(request.getForeClosureType())) {
+
+            if (remainingAmount.compareTo(BigDecimal.ZERO) != 0) {
+                throw new IllegalArgumentException(
+                        "Full foreclosure payment must settle the outstanding amount");
+            }
+
+            account.setOutstandingAmount(BigDecimal.ZERO);
+            account.setStatus(LoanAccountStatus.CLOSED);
+
+            closure.setRemarks("Full foreclosure completed");
+
+        } else if ("PARTIAL".equalsIgnoreCase(request.getForeClosureType())) {
+
+            if (remainingAmount.compareTo(BigDecimal.ZERO) <= 0) {
+                throw new IllegalArgumentException(
+                        "Partial payment must leave a positive outstanding amount");
+            }
+
+            account.setOutstandingAmount(remainingAmount);
+            account.setStatus(LoanAccountStatus.ACTIVE);
+
+            closure.setFinalSettlementAmount(remainingAmount);
+            closure.setRemarks("Remaining outstanding for EMI regeneration");
+
+            // Call your existing EMI regeneration method here.
+            // emiService.regenerateEmi(account, remainingAmount);
+
+        } else {
+            throw new IllegalArgumentException(
+                    "Invalid foreclosure type");
+        }
+
+        loanClosureRepository.save(closure);
+        loanAccountRepository.save(account);
+
+        request.setIsPaid(true);
+        request.setPaidDate(LocalDateTime.now());
+        foreClosureRequestRepository.save(request);
+    }
+
+    @Override
+    public ResponseApi<List<ForeClosurePaymentDto>>
+    getApprovedForeclosurePayments(Integer customerId) {
+
+        List<LoanAccount> accounts =
+                loanAccountRepository.findByCustomerId(customerId);
+
+        Map<Integer, LoanAccount> accountMap = accounts.stream()
+                .collect(Collectors.toMap(
+                        LoanAccount::getLoanAccountId,
+                        account -> account
+                ));
+
+        List<Integer> loanIds = accounts.stream()
+                .map(LoanAccount::getLoanAccountId)
+                .toList();
+
+        if (loanIds.isEmpty()) {
+            return new ResponseApi<>(
+                    true,
+                    "No foreclosure payments found",
+                    List.of()
+            );
+        }
+
+        List<ForeClosurePaymentDto> result =
+                foreClosureRequestRepository
+                        .findByLoanAccountIdIn(loanIds)
+                        .stream()
+                        .filter(r -> "APPROVED".equalsIgnoreCase(r.getStatus()))
+                        .filter(r -> !Boolean.TRUE.equals(r.getIsPaid()))
+                        .filter(r -> {
+                            LoanAccount account = accountMap.get(r.getLoanAccountId());
+
+                            return account != null
+                                    && account.getStatus() != LoanAccountStatus.CLOSED;
+                        })
+                        .filter(r -> {
+                            LoanAccount account = accountMap.get(r.getLoanAccountId());
+
+                            return account != null
+                                    && account.getStatus() == LoanAccountStatus.ACTIVE
+                                    && account.getOutstandingAmount() != null
+                                    && account.getOutstandingAmount()
+                                    .compareTo(BigDecimal.ZERO) > 0;
+                        })
+                        .map(r -> {
+                            LoanAccount account =
+                                    accountMap.get(r.getLoanAccountId());
+
+                            ForeClosurePaymentDto dto =
+                                    new ForeClosurePaymentDto();
+
+                            dto.setForeClosureRequestId(r.getRequestId());
+                            dto.setLoanAccountId(r.getLoanAccountId());
+                            dto.setLoanAccountNo(account.getLoanAccountNo());
+                            dto.setForeClosureType(r.getForeClosureType());
+                            dto.setForeClosureAmount(r.getForeClosureAmount());
+                            dto.setOutstandingAmount(account.getOutstandingAmount());
+                            dto.setExpectedClosureDate(r.getExpectedClosureDate());
+                            dto.setStatus(r.getStatus());
+                            dto.setIsPaid(r.getIsPaid());
+                            dto.setReason(r.getReason());
+
+                            return dto;
+                        })
+                        .toList();
+
+        return new ResponseApi<>(
+                true,
+                "Approved foreclosure payments fetched successfully",
+                result
+        );
+    }
+
+//    @Transactional
+//    @Override
+//    public LoanPaymentResponseDTO processForeClosurePayment(
+//            ForeClosurePaymentRequestDto dto) {
+//
+//        // 1. Fetch the foreclosure request
+//        ForeClosureRequest request = foreClosureRequestRepository
+//                .findById(dto.getForeClosureRequestId())
+//                .orElseThrow(() ->
+//                        new IllegalArgumentException(
+//                                "Foreclosure request not found: "
+//                                        + dto.getForeClosureRequestId()));
+//
+//        // 2. Validate approval and payment status
+//        if (!"APPROVED".equalsIgnoreCase(request.getStatus())) {
+//            throw new IllegalArgumentException(
+//                    "Foreclosure request is not approved");
+//        }
+//        // Fetch the loan account before processing payment
+//        LoanAccount loanAccount = loanAccountRepository
+//                .findById(request.getLoanAccountId())
+//                .orElseThrow(() ->
+//                        new IllegalArgumentException("Loan account not found"));
+//
+//// Prevent payment against a closed loan
+//        if ("CLOSED".equalsIgnoreCase(String.valueOf(loanAccount.getStatus()))) {
+//            throw new IllegalArgumentException(
+//                    "Loan account is already closed");
+//        }
+//
+//        if (Boolean.TRUE.equals(request.getIsPaid())) {
+//            throw new IllegalArgumentException(
+//                    "Foreclosure request is already paid");
+//        }
+//
+//        // 3. Validate the amount against the approved request
+//        BigDecimal approvedAmount =
+//                "FULL".equalsIgnoreCase(request.getForeClosureType())
+//                        ? request.getForeClosureAmount()
+//                        : request.getPartialAmount();
+//
+//        if (dto.getPaymentAmount() == null
+//                || approvedAmount == null
+//                || dto.getPaymentAmount().compareTo(approvedAmount) != 0) {
+//            throw new IllegalArgumentException(
+//                    "Payment amount does not match the approved foreclosure amount");
+//        }
+//
+//        // IMPORTANT:
+//        // Call this method only AFTER actual Razorpay payment verification.
+//        // Do not trust payment IDs or signatures supplied by the frontend alone.
+//
+//        // 4. Save the verified payment
+//        LoanPayments payment = new LoanPayments();
+//        payment.setLoanAccountId(request.getLoanAccountId());
+//        payment.setPaymentAmount(dto.getPaymentAmount());
+//        payment.setPaymentDate(LocalDateTime.now());
+//        payment.setPaymentStatus("SUCCESS");
+//        payment.setPaymentName(
+//                "FULL".equalsIgnoreCase(request.getForeClosureType())
+//                        ? "Full Foreclosure Payment"
+//                        : "Partial Foreclosure Payment");
+//
+//        LoanPayments savedPayment = loanPaymentRepository.save(payment);
+//
+//        // 5. Complete foreclosure.
+//        // This method handles outstanding amount and loan status.
+//        doneClosure(
+//                request.getRequestId(),
+//                savedPayment.getPaymentAmount()
+//        );
+//
+//        // 6. Return payment response
+//        LoanPaymentResponseDTO response =
+//                modelMapper.map(savedPayment, LoanPaymentResponseDTO.class);
+//
+//        response.setMessage(
+//                "Foreclosure payment processed successfully");
+//
+//        return response;
+//    }
+
+    @Override
+    public ResponseApi<Page<CustomerForeClosureRequestDto>> getCustomerForeclosureRequests(Integer customerId, Pageable pageable) {
+
+            List<Integer> loanAccountIds =
+                    loanAccountRepository.findLoanAccountIdsByCustomerId(customerId);
+
+            if (loanAccountIds == null || loanAccountIds.isEmpty()) {
+                return new ResponseApi<>(
+                        true,
+                        "No foreclosure requests found",
+                        Page.empty(pageable)
+                );
+            }
+
+            Page<ForeClosureRequest> requestPage =
+                    foreClosureRequestRepository
+                            .findByLoanAccountIdIn(loanAccountIds, pageable);
+
+            Page<CustomerForeClosureRequestDto> dtoPage =
+                    requestPage.map(request -> {
+                        CustomerForeClosureRequestDto dto =
+                                new CustomerForeClosureRequestDto();
+
+                        // Yahan apne existing DTO mapping code ko rakhein.
+                        // Example:
+                        dto.setRequestId(request.getRequestId());
+                        dto.setLoanAccountId(request.getLoanAccountId());
+                        dto.setStatus(request.getStatus());
+
+                        return dto;
+                    });
+
+            return new ResponseApi<>(
+                    true,
+                    "Foreclosure requests fetched successfully",
+                    dtoPage
+            );
+
     }
 
 

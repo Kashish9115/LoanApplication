@@ -13,6 +13,7 @@ import java.time.LocalDate;
 public class LoanAccountDetailsDto {
 
     private Integer loanAccountId;
+    private  Integer  customerId;
     private String loanAccountNo;
     private BigDecimal outstandingAmount;
     private LocalDate nextEmiDate;

@@ -9,16 +9,17 @@ import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/api")
+@CrossOrigin(origins = "http://localhost:4200")
 @RequiredArgsConstructor
 public class CibilReportController {
     private  final CibilReportService cibilReportService;
 
-    @PostMapping("/customer/{customerId}/cibilscore")
+    @PostMapping("/customer/cibilscore/{customerId}")
     public ResponseApi<CibilReportDto> genarteCibil( @PathVariable("customerId") Integer customerId){
         return  cibilReportService.generateCibil(customerId);
     }
 
-    @GetMapping("/customer/{customerId}/cibilscore")
+    @GetMapping("/customer/cibilscore/{customerId}")
         public ResponseApi<CibilReportDto> getCibilScore (@PathVariable("customerId") Integer customerId){
             return cibilReportService.getLatestCibil(customerId);
         }
