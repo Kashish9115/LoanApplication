@@ -1,12 +1,21 @@
 package com.example.loanApplication.entity;
 
-import jakarta.persistence.*;
-import lombok.Data;
+import lombok.Getter;
+import lombok.Setter;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.Table;
 
+/** Maps only the columns present in the supplied kycdocuments table. */
+@Getter
+@Setter
 @Entity
-@Table(name = "KycDocuments")
-@Data
+@Table(name = "kycdocuments")
 public class KycDocument {
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "DocumentId")
@@ -22,5 +31,5 @@ public class KycDocument {
     private String filePath;
 
     @Column(name = "VerificationStatus", length = 50)
-    private String verificationStatus;
+    private String verificationStatus = "PENDING";
 }
