@@ -11,4 +11,5 @@ public interface KycDocumentService {
     KycDocumentResponse verifyDocument(Integer documentId, KycVerificationRequest request);
     boolean isKycCompleted(Integer customerId);
     void deleteDocument(Integer documentId);
+
 }

@@ -17,4 +17,7 @@ public interface LoanPaymentRepository extends JpaRepository<LoanPayments, Integ
             Integer loanAccountId, Pageable pageable
     );
 
+    // Fetch last 5 payment transactions for active loan
+    List<LoanPayments> findTop5ByLoanAccountIdOrderByPaymentDateDesc(Integer loanAccountId);
+
 }
