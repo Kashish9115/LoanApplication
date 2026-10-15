@@ -39,4 +39,5 @@ public class DealReview {
     @Enumerated(EnumType.STRING)
     @Column(name = "Status", length = 50)
     private ReviewStatus status;
+
 }

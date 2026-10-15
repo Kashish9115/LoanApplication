@@ -70,8 +70,6 @@ public interface EmiSchedulesRepo  extends JpaRepository< EmiSchedules, Integer>
   //     List<EmiScheduleResponseDto> findByDueDateAndPaymentStatus(LocalDate targetDate, String status);
 
 
-
-
     @Query("""
     SELECT new com.example.loanApplication.dto.EmiReminderDto(
         e.loanAccount.customerId,
@@ -87,6 +85,34 @@ public interface EmiSchedulesRepo  extends JpaRepository< EmiSchedules, Integer>
     List<EmiReminderDto> findEmiReminders(
             @Param("dueDate") LocalDate dueDate,
             @Param("status") String status
+    );
+
+
+    //dashboard methods
+    // Overall Monthly Collection Efficiency
+    @Query("""
+            SELECT MONTH(e.dueDate),
+                   SUM(e.emi),
+                   SUM(
+                       CASE
+                           WHEN e.paymentStatus = 'PAID'
+                           THEN e.emi
+                           ELSE 0
+                       END
+                   )
+            FROM EmiSchedules e
+            GROUP BY MONTH(e.dueDate)
+            ORDER BY MONTH(e.dueDate)
+            """)
+    List<Object[]> fetchCollectionEfficiencyByMonth();
+
+
+    // Count paid EMIs
+    Long countByLoanAccount_LoanAccountIdAndPaymentStatus(Integer loanAccountId, String paymentStatus);
+
+    // Fetch upcoming pending EMI sorted by due date
+    Optional<EmiSchedules> findFirstByLoanAccount_LoanAccountIdAndPaymentStatusOrderByDueDateAsc(
+            Integer loanAccountId, String paymentStatus
     );
 
 }

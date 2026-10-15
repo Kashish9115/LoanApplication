@@ -36,7 +36,6 @@ public class LoanDeal {
     @Column(name = "CustomerId", nullable = false)
     private Integer customerId;
 
-
     @Enumerated(EnumType.STRING)
     @Column(name = "LoanType", length = 100)
     private LoanType loanType;
