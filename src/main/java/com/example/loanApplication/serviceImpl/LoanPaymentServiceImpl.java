@@ -55,7 +55,7 @@ private  final ModelMapper modelMapper;
 
 
     @Override
-    public PageResponse<LoanPaymentResponseDTO> getPaymentHistoryByAccountId(
+    public PageResponse<PaymentHistoryResponseDTO> getPaymentHistoryByAccountId(
             Integer loanAccountId, int page, int size) {
 
         Pageable pageable = PageRequest.of(
@@ -68,13 +68,13 @@ private  final ModelMapper modelMapper;
                 loanPaymentRepository
                         .findByLoanAccountIdOrderByPaymentDateDesc(loanAccountId, pageable);
 
-        List<LoanPaymentResponseDTO> responseDto = payments.getContent()
+        List<PaymentHistoryResponseDTO> responseDto = payments.getContent()
                 .stream()
                 .map(payment -> modelMapper.map(
-                        payment, LoanPaymentResponseDTO.class))
+                        payment, PaymentHistoryResponseDTO.class))
                 .toList();
 
-        return PageResponse.<LoanPaymentResponseDTO>builder()
+        return PageResponse.<PaymentHistoryResponseDTO>builder()
                 .content(responseDto)
                 .pageNumber(payments.getNumber())
                 .pageSize(payments.getSize())
@@ -284,15 +284,15 @@ private  final ModelMapper modelMapper;
 
 
     @Override
-    public PageResponse<LoanPaymentResponseDTO> getAllPaymentsForAdmin(int page , int size) {
+    public PageResponse<PaymentHistoryResponseDTO> getAllPaymentsForAdmin(int page , int size) {
 
         Pageable pageable= PageRequest.of(page, size);
         Page<LoanPayments> payments = loanPaymentRepository.findAll(pageable);
         // payments.map(p -> modelMapper.map(p, LoanPaymentResponseDTO.class));
 
- List<LoanPaymentResponseDTO>  responsedto=  payments.getContent().stream().map(p -> modelMapper.map(p, LoanPaymentResponseDTO.class)).toList();
+ List<PaymentHistoryResponseDTO>  responsedto=  payments.getContent().stream().map(p -> modelMapper.map(p,  PaymentHistoryResponseDTO.class)).toList();
 
-    return  PageResponse.<LoanPaymentResponseDTO>builder().content(responsedto).
+    return  PageResponse.<PaymentHistoryResponseDTO>builder().content(responsedto).
             pageNumber(payments.getNumber()).pageSize(payments.getSize()).build();
 
 

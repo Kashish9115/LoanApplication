@@ -39,14 +39,7 @@ public ResponseEntity<List<EmiScheduleResponseDto>> generateInitialSchedule(
     return ResponseEntity.ok(schedules);
 }
 
-    /**
-     * Returns an itemized breakdown separating base EMI, bounce fees, and daily accrued interest.
-     */
-//    @GetMapping("/breakdown/{emiScheduleId}")
-//    public ResponseEntity<EmiBreakdownDTO> getItemizedEmiBreakdown(@PathVariable Long emiScheduleId) {
-//        EmiBreakdownDTO breakdown = emiService.getItemizedEmiBreakdown(emiScheduleId);
-//        return ResponseEntity.ok(breakdown);
-//    }
+
 
     @GetMapping("/breakdown/{emiScheduleId}")
     public ResponseEntity<EmiBreakDownDto> getEmiBreakdown(
@@ -105,14 +98,7 @@ public ResponseEntity<List<EmiScheduleResponseDto>> generateInitialSchedule(
 
 
 
-//    @PostMapping("/generate/{loanAccountId}")
-//    public ResponseEntity<List<EmiScheduleResponseDto>> generateEmi(
-//            @PathVariable Integer loanAccountId) {
-//
-//        return ResponseEntity.ok(
-//                emiScheduleService.generateEmiScheduleByLoanAccountId(loanAccountId)
-//        );
-//    }
+
 
     @PostMapping("/run")
     public ResponseEntity<String> runPenaltyScheduler() {

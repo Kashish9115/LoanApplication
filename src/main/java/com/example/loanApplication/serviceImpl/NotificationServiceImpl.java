@@ -36,7 +36,6 @@ public class NotificationServiceImpl implements NotificationService {
    notifications.setCreatedAt(LocalDateTime.now());
    if(customer.getEmail()!=null && !customer.getEmail().isEmpty()){
        emailService.sendEmail(customer.getEmail(), emailSubject, message);
-
    }
  Notifications   saved=  notificationsRepo.save(notifications);
 
@@ -46,8 +45,6 @@ public class NotificationServiceImpl implements NotificationService {
     @Override
     public List<NotificationResponseDto> getCustomerNotifications(Integer customerId) {
         List<Notifications> dashboardAlerts=notificationsRepo.findByCustomer_CustomerIdAndIsReadFalseOrderByCreatedAtDesc(customerId);
-
-
      return    dashboardAlerts.stream().map(alert->modelMapper.map(alert, NotificationResponseDto.class)).toList();
 
 
@@ -55,8 +52,6 @@ public class NotificationServiceImpl implements NotificationService {
 
     @Override
     public void markNotificationAsRead(Integer notificationId) {
-
-
         Notifications notification = notificationsRepo.findById(notificationId)
                 .orElseThrow(() -> new ResourceNotFoundException("Notification not found for ID: " + notificationId));
 

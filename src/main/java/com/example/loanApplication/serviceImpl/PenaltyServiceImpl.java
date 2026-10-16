@@ -210,7 +210,6 @@ private  final NotificationService notificationService;
             accrualDate = accrualDate.plusDays(1);
         }
 
-        // Send notification only if today's fee was newly recorded
         if (todayAccrualCreated) {
 
             Integer customerId =

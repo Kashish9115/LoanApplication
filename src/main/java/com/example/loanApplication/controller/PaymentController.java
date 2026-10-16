@@ -6,14 +6,13 @@ import com.example.loanApplication.service.LoanPaymentService;
 import com.example.loanApplication.service.RazorpayService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.checkerframework.checker.index.qual.SameLen;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.math.BigDecimal;
-import java.util.List;
+
 @Slf4j
 @RestController
+@CrossOrigin(origins =  "http://localhost:4200")
 @RequestMapping("/api/payments")
 @RequiredArgsConstructor
 public class PaymentController {
@@ -50,9 +49,6 @@ public class PaymentController {
     @PostMapping("/verify-and-pay")
     public ResponseEntity<LoanPaymentResponseDTO> verifyAndPay(
             @RequestBody LoanPaymentRequestDTO requestDto) {
-
-
-
         razorpayService.verifySignature(
                 requestDto.getRazorpayOrderId(),
                 requestDto.getRazorpayPaymentId(),
@@ -72,13 +68,11 @@ public class PaymentController {
 
 
     @GetMapping("/history/customer/{loanAccountId}")
-    public ResponseEntity<PageResponse<LoanPaymentResponseDTO>> getCustomerPaymentHistory(
+    public ResponseEntity<PageResponse<PaymentHistoryResponseDTO>> getCustomerPaymentHistory(
             @PathVariable Integer loanAccountId,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size) {
-
-
-        PageResponse<LoanPaymentResponseDTO> history =
+        PageResponse< PaymentHistoryResponseDTO> history =
                 paymentService.getPaymentHistoryByAccountId(
                         loanAccountId, page, size);
 
@@ -90,7 +84,7 @@ public class PaymentController {
 
 
     @GetMapping("/history/admin/all")
-    public ResponseEntity<PageResponse<LoanPaymentResponseDTO>> getAllPaymentsForAdmin(@RequestParam(defaultValue = "0") int page , @RequestParam(defaultValue = "5")int size) {
+    public ResponseEntity<PageResponse<PaymentHistoryResponseDTO>> getAllPaymentsForAdmin(@RequestParam(defaultValue = "0") int page , @RequestParam(defaultValue = "5")int size) {
 
         return ResponseEntity.ok(paymentService.getAllPaymentsForAdmin(page, size));
     }

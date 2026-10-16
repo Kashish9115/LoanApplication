@@ -1,8 +1,7 @@
 package com.example.loanApplication.utils;
 
 import com.example.loanApplication.dto.EmiReminderDto;
-import com.example.loanApplication.dto.EmiScheduleResponseDto;
-import com.example.loanApplication.entity.EmiSchedules;
+
 import com.example.loanApplication.repository.EmiSchedulesRepo;
 import com.example.loanApplication.service.NotificationService;
 import lombok.RequiredArgsConstructor;
