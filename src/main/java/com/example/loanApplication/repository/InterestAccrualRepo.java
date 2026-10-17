@@ -11,14 +11,9 @@ import java.util.List;
 public interface InterestAccrualRepo extends JpaRepository<InterestAccruals, Integer> {
 
 
-    List<InterestAccruals>
-    findByLoanAccountIdAndInstallmentNoOrderByAccrualDateDesc(
-            Integer loanAccountId,
-            Integer installmentNo
-    );
 
-    boolean existsByLoanAccountIdAndInstallmentNoAndAccrualDateBetween(
-            Integer loanAccountId,
+
+    boolean existsByLoanAccountIdAndInstallmentNoAndAccrualDateBetween(Integer loanAccountId,
             Integer installmentNo,
             LocalDateTime start,
             LocalDateTime end

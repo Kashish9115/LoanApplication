@@ -188,7 +188,6 @@ public class RazorpayServiceImpl  implements RazorpayService {
             return true;
         }
 
-        // Actual Razorpay verification for UI
         if (orderId == null || orderId.isBlank()
                 || paymentId == null || paymentId.isBlank()
                 || signature == null || signature.isBlank()) {

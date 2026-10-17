@@ -21,47 +21,7 @@ import java.util.Optional;
 
 public interface EmiSchedulesRepo  extends JpaRepository< EmiSchedules, Integer> {
 
-//    List<EmiSchedules> findByLoanAccountIdOrderByInstallmentNoAsc(
-//            Integer loanAccountId);
-//
-//    Optional<EmiSchedules> findByEmiScheduleId(
-//            Integer emiScheduleId);
-//
-//    List<EmiSchedules> findByPaymentStatusAndDueDateLessThanEqual(
-//            String paymentStatus,
-//            LocalDateTime dueDate);
-//
-//    List<EmiSchedules> findByLoanAccountIdAndPaymentStatus(
-//            Integer loanAccountId,
-//            String paymentStatus);
 
-
-//    boolean existsByLoanAccount_LoanAccountId(
-//            Integer loanAccountId);
-//
-//    List<EmiSchedules> findByLoanAccount_LoanAccountId(
-//            Integer loanAccountId);
-//
-//    List<EmiSchedules>
-//    findByLoanAccount_LoanAccountIdAndPaymentStatusAndDueDateGreaterThanEqualOrderByDueDateAsc(
-//            Integer loanAccountId,
-//            String paymentStatus,
-//            LocalDate dueDate);
-//
-//    List<EmiSchedules>
-//    findByDueDateLessThanEqualAndPaymentStatus(
-//            LocalDate dueDate,
-//            String paymentStatus);
-//
-//    List<EmiSchedules>
-//    findByLoanAccount_LoanAccountIdAndPaymentStatus(
-//            Integer loanAccountId,
-//            String paymentStatus);
-//
-//
-    List<EmiSchedules> findByLoanAccount_LoanAccountIdAndPaymentStatusNotAndDueDateGreaterThanEqualOrderByDueDateAsc(Integer loanAccountId, String paid, LocalDate now);
-
- //List<EmiSchedules> findByLoanAccountIdOrderByInstallmentNoAsc(Integer loanAccountId);
 
     List<EmiSchedules>
     findByLoanAccount_LoanAccountIdAndPaymentStatusOrderByInstallmentNoAsc(
@@ -74,7 +34,10 @@ public interface EmiSchedulesRepo  extends JpaRepository< EmiSchedules, Integer>
     );
 
 
-    List<EmiSchedules> findByDueDateBeforeAndPaymentStatus(LocalDate dueDate, String paymentStatus);    @Query("""
+    List<EmiSchedules> findByDueDateBeforeAndPaymentStatus(LocalDate dueDate, String paymentStatus);
+
+
+    @Query("""
     SELECT new com.example.loanApplication.dto.EmiReminderDto(
         e.loanAccount.customerId,
         e.installmentNo,

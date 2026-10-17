@@ -11,11 +11,8 @@ import java.util.Optional;
 public interface PenaltyChargesRepo  extends JpaRepository< PenaltyCharges, Integer> {
 
 
-    boolean existsByEmiSchedule_EmiScheduleId(Integer emiScheduleId);
 
-    /**
-     * 3. Specific EMI schedule ki penalty details fetch karne ke liye (Optional/Utility)
-     */
+
     Optional<PenaltyCharges> findByEmiSchedule_EmiScheduleId(Integer emiScheduleId);
 
     boolean existsByEmiSchedule_EmiScheduleIdAndReason(Integer emiScheduleId, String reason);

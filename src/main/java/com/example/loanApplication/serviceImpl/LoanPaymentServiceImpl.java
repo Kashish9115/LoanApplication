@@ -43,14 +43,7 @@ public class LoanPaymentServiceImpl implements LoanPaymentService {
 private  final ModelMapper modelMapper;
 
 
-//@Override
-//    public PageResponse<LoanPaymentResponseDTO> getPaymentHistoryByAccountId(Integer LoanAccountId , int page , int size) {
-//
-//        List<LoanPayments> loanpayments = loanPaymentRepository.findByLoanAccountIdOrderByPaymentDateDesc(LoanAccountId);
-//
-//
-//        return  loanpayments.stream().map(paymentHistory->modelMapper.map(paymentHistory, LoanPaymentResponseDTO.class)).toList();
-//    }
+
 
 
 
