@@ -6,6 +6,7 @@ import com.example.loanApplication.dto.RazorpayOrderResponseDto;
 import com.example.loanApplication.exception.SignatureVerificationException;
 import com.example.loanApplication.service.RazorpayService;
 import com.razorpay.Order;
+import com.razorpay.Payment;
 import com.razorpay.RazorpayClient;
 import com.razorpay.Utils;
 import lombok.RequiredArgsConstructor;
@@ -27,99 +28,6 @@ public class RazorpayServiceImpl  implements RazorpayService {
     @Value("${razorpay.key.secret}")
     private String keySecret;
     private final EmiScheduleServiceImpl emiService;
-
-
-//
-// yeh wala sahi hai
-//    @Override
-//    public boolean verifySignature(
-//            String orderId,
-//            String paymentId,
-//            String signature) {
-//
-//        if (orderId == null || orderId.isBlank()
-//                || paymentId == null || paymentId.isBlank()
-//                || signature == null || signature.isBlank()) {
-//
-//            throw new SignatureVerificationException(
-//                    "Razorpay order ID, payment ID and signature are required."
-//            );
-//        }
-//
-//        try {
-//            JSONObject attributes = new JSONObject();
-//            attributes.put("razorpay_order_id", orderId);
-//            attributes.put("razorpay_payment_id", paymentId);
-//            attributes.put("razorpay_signature", signature);
-//
-//            boolean valid = Utils.verifyPaymentSignature(
-//                    attributes, keySecret
-//            );
-//
-//            if (!valid) {
-//                throw new SignatureVerificationException(
-//                        "Invalid Razorpay payment signature."
-//                );
-//            }
-//
-//            return true;
-//
-//        } catch (SignatureVerificationException e) {
-//            throw e;
-//        } catch (Exception e) {
-//            throw new SignatureVerificationException(
-//                    "Razorpay signature verification failed."
-//            );
-//        }
-//    }
-//
-//
-//
-//
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
     @Override
@@ -181,12 +89,6 @@ public class RazorpayServiceImpl  implements RazorpayService {
             String orderId,
             String paymentId,
             String signature) {
-
-        // Local Postman testing only
-        if (mockSignatureEnabled) {
-            log.warn("Signature verification bypassed for local testing");
-            return true;
-        }
 
         if (orderId == null || orderId.isBlank()
                 || paymentId == null || paymentId.isBlank()
@@ -270,4 +172,46 @@ public class RazorpayServiceImpl  implements RazorpayService {
             );
         }
     }
+
+
+
+
+
+
+    @Override
+    public boolean verifyCapturedPayment(String orderId, String paymentId,
+                                         String signature, BigDecimal expectedAmount) {
+        verifySignature(orderId, paymentId, signature);
+        if (expectedAmount == null || expectedAmount.compareTo(BigDecimal.ZERO) <= 0) {
+            throw new IllegalArgumentException("Expected payment amount is invalid.");
+        }
+        try {
+            Order order = razorpayClient.orders.fetch(orderId);
+            Payment payment = razorpayClient.payments.fetch(paymentId);
+            int expectedPaise = expectedAmount.movePointRight(2).intValueExact();
+            int orderPaise = ((Number) order.get("amount")).intValue();
+            int paymentPaise = ((Number) payment.get("amount")).intValue();
+            String paymentOrderId = String.valueOf(payment.get("order_id"));
+            String currency = String.valueOf(payment.get("currency"));
+            String status = String.valueOf(payment.get("status"));
+
+            if (!orderId.equals(String.valueOf(order.get("id")))
+                    || !orderId.equals(paymentOrderId)
+                    || expectedPaise != orderPaise
+                    || expectedPaise != paymentPaise
+                    || !"INR".equalsIgnoreCase(currency)
+                    || !"captured".equalsIgnoreCase(status)) {
+                throw new SignatureVerificationException(
+                        "Razorpay payment is not captured or does not match the expected order and amount.");
+            }
+            return true;
+        } catch (SignatureVerificationException e) {
+            throw e;
+        } catch (Exception e) {
+            log.error("Unable to verify Razorpay captured payment", e);
+            throw new SignatureVerificationException(
+                    "Unable to confirm captured payment with Razorpay.");
+        }
+    }
+
 }

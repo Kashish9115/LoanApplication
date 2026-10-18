@@ -44,9 +44,6 @@ private  final ModelMapper modelMapper;
 
 
 
-
-
-
     @Override
     public PageResponse<PaymentHistoryResponseDTO> getPaymentHistoryByAccountId(
             Integer loanAccountId, int page, int size) {
@@ -92,13 +89,11 @@ private  final ModelMapper modelMapper;
             throw new IllegalArgumentException("Invalid payment request.");
         }
 
-        // 1. Fetch loan account
         LoanAccount account = loanAccountRepo.findById(dto.getLoanAccountId())
                 .orElseThrow(() -> new ResourceNotFoundException(
                         "Loan account not found: " + dto.getLoanAccountId()
                 ));
 
-        // 2. Fetch pending EMIs in installment order
         List<EmiSchedules> pendingEmis =
                 emiSchedulesRepo
                         .findByLoanAccount_LoanAccountIdAndPaymentStatusOrderByInstallmentNoAsc(
@@ -114,7 +109,6 @@ private  final ModelMapper modelMapper;
 
         if (dto.getEmiScheduleId() == null) {
 
-            // Combined mode: all pending EMIs due today or earlier
             payableEmis = pendingEmis.stream()
                     .filter(e -> e.getDueDate() != null)
                     .filter(e -> !e.getDueDate().isAfter(today))
@@ -122,7 +116,6 @@ private  final ModelMapper modelMapper;
 
         } else {
 
-            // Single EMI mode: only the earliest pending EMI can be paid
             EmiSchedules selected = pendingEmis.stream()
                     .filter(e -> e.getEmiScheduleId()
                             .equals(dto.getEmiScheduleId()))
@@ -152,7 +145,6 @@ private  final ModelMapper modelMapper;
             throw new IllegalStateException("No due EMI available for payment.");
         }
 
-        // 3. Calculate total from backend data
         BigDecimal requiredAmount = BigDecimal.ZERO;
         BigDecimal principalRepaid = BigDecimal.ZERO;
 
@@ -178,7 +170,6 @@ private  final ModelMapper modelMapper;
             );
         }
 
-        // 4. Amount must match exactly
         if (dto.getPaymentAmount().compareTo(requiredAmount) != 0) {
             throw new InvalidPaymentAmountException(
                     "Required amount is ₹" + requiredAmount
@@ -187,8 +178,6 @@ private  final ModelMapper modelMapper;
         }
 
 
-
-        // 5. Calculate outstanding principal
         BigDecimal outstanding = account.getOutstandingAmount() != null
                 ? account.getOutstandingAmount()
                 : BigDecimal.ZERO;
@@ -203,7 +192,6 @@ private  final ModelMapper modelMapper;
 
         LocalDateTime paidAt = LocalDateTime.now();
 
-        // 6. Save one ledger record for this transaction
         LoanPayments payment = new LoanPayments();
         payment.setLoanAccountId(account.getLoanAccountId());
         payment.setPaymentAmount(requiredAmount);
@@ -219,7 +207,6 @@ private  final ModelMapper modelMapper;
 
         LoanPayments savedPayment = loanPaymentRepository.save(payment);
 
-        // 7. Mark all included EMIs as paid
         for (EmiSchedules emi : payableEmis) {
             emi.setPaymentStatus("PAID");
             emi.setPaidDate(paidAt);
@@ -227,7 +214,6 @@ private  final ModelMapper modelMapper;
 
         emiSchedulesRepo.saveAll(payableEmis);
 
-        // 8. Update account totals
         BigDecimal totalPaid = account.getTotalPaidAmount() != null
                 ? account.getTotalPaidAmount()
                 : BigDecimal.ZERO;
@@ -245,7 +231,6 @@ private  final ModelMapper modelMapper;
 
         loanAccountRepo.save(account);
 
-        // 9. Notify customer
         if (account.getCustomerId() != null) {
             notificationService.sendNotification(
                     account.getCustomerId(),
@@ -257,7 +242,6 @@ private  final ModelMapper modelMapper;
             );
         }
 
-        // 10. Response
         LoanPaymentResponseDTO response =
                 modelMapper.map(savedPayment, LoanPaymentResponseDTO.class);
 
@@ -281,7 +265,6 @@ private  final ModelMapper modelMapper;
 
         Pageable pageable= PageRequest.of(page, size);
         Page<LoanPayments> payments = loanPaymentRepository.findAll(pageable);
-        // payments.map(p -> modelMapper.map(p, LoanPaymentResponseDTO.class));
 
  List<PaymentHistoryResponseDTO>  responsedto=  payments.getContent().stream().map(p -> modelMapper.map(p,  PaymentHistoryResponseDTO.class)).toList();
 
@@ -296,7 +279,6 @@ private  final ModelMapper modelMapper;
     public LoanPaymentResponseDTO processForeClosurePayment(
             ForeClosurePaymentRequestDto dto) {
 
-        // 1. Fetch the foreclosure request
         ForeClosureRequest request = foreClosureRequestRepository
                 .findById(dto.getForeClosureRequestId())
                 .orElseThrow(() ->
@@ -304,7 +286,6 @@ private  final ModelMapper modelMapper;
                                 "Foreclosure request not found: "
                                         + dto.getForeClosureRequestId()));
 
-        // 2. Validate approval and payment status
         if (!"APPROVED".equalsIgnoreCase(request.getStatus())) {
             throw new IllegalArgumentException(
                     "Foreclosure request is not approved");
@@ -315,7 +296,6 @@ private  final ModelMapper modelMapper;
                     "Foreclosure request is already paid");
         }
 
-        // 3. Validate the amount against the approved request
         BigDecimal approvedAmount =
                 "FULL".equalsIgnoreCase(request.getForeClosureType())
                         ? request.getForeClosureAmount()
@@ -328,11 +308,7 @@ private  final ModelMapper modelMapper;
                     "Payment amount does not match the approved foreclosure amount");
         }
 
-        // IMPORTANT:
-        // Call this method only AFTER actual Razorpay payment verification.
-        // Do not trust payment IDs or signatures supplied by the frontend alone.
 
-        // 4. Save the verified payment
         LoanPayments payment = new LoanPayments();
         payment.setLoanAccountId(request.getLoanAccountId());
         payment.setPaymentAmount(dto.getPaymentAmount());

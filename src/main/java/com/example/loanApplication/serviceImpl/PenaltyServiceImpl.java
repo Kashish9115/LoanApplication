@@ -37,15 +37,6 @@ private  final NotificationService notificationService;
 
 
 
-    private static final BigDecimal BOUNCE_CHARGE =
-            new BigDecimal("600.00");
-
-    private static final BigDecimal DAILY_LATE_FEE =
-            new BigDecimal("1.00");
-
-    private static final String BOUNCE_REASON =
-            "Bounce Charge - Overdue EMI";
-
 
     @Override
     public PageResponse<PenaltyChargesResponseDto> getPenaltiesByAccountId(

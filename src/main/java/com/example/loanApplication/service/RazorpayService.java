@@ -11,9 +11,11 @@ public interface RazorpayService {
   //  RazorpayOrderResponseDto createOrder(BigDecimal amount, String currency);
 
 
+  //  boolean verifySignature(String orderId, String paymentId, String signature);
+
     boolean verifySignature(String orderId, String paymentId, String signature);
 
-
+    boolean verifyCapturedPayment(String orderId, String paymentId, String signature, java.math.BigDecimal expectedAmount);
 
 
 

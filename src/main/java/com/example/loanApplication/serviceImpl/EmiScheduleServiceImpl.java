@@ -60,9 +60,7 @@ public List<EmiScheduleResponseDto> generateInitialSchedule(
     int tenure = account.getTenureMonths();
     int emiDay = account.getEmiDay();
 
-    if (emiSchedulesRepo
-            .findByLoanAccount_LoanAccountIdOrderByInstallmentNoAsc(
-                    loanAccountId).size() > 0) {
+    if (emiSchedulesRepo.findByLoanAccount_LoanAccountIdOrderByInstallmentNoAsc(loanAccountId).size() > 0) {
         throw new IllegalStateException(
                 "EMI schedule already exists for this loan account");
     }
@@ -99,7 +97,7 @@ public List<EmiScheduleResponseDto> generateInitialSchedule(
 
         BigDecimal installmentEmi = emi;
 
-        // Adjust the final installment for rounding
+
         if (i == tenure) {
             principalAmount = openingBalance;
             installmentEmi = principalAmount.add(interest)
@@ -365,6 +363,42 @@ public List<EmiScheduleResponseDto> regenerateScheduleOnPartialForeclosure(
                 totalPayable,
                 schedule.getEmiScheduleId()
         );
+    }
+
+
+
+
+    public List<EmiBreakDownDto> getPendingPaymentBreakdownsThrough(Integer emiScheduleId) {
+        EmiSchedules selected = emiSchedulesRepo.findById(emiScheduleId)
+                .orElseThrow(() -> new EmiScheduleNotFound(
+                        "EMI Schedule not found for ID: " + emiScheduleId));
+        if (!"PENDING".equalsIgnoreCase(selected.getPaymentStatus())) {
+            throw new IllegalStateException("Selected EMI is not pending.");
+        }
+
+        List<EmiSchedules> pendingEmis =
+                emiSchedulesRepo.findByLoanAccount_LoanAccountIdAndPaymentStatusOrderByInstallmentNoAsc(
+                        selected.getLoanAccount().getLoanAccountId(), "PENDING");
+        int selectedIndex = -1;
+        for (int index = 0; index < pendingEmis.size(); index++) {
+            if (pendingEmis.get(index).getEmiScheduleId().equals(emiScheduleId)) {
+                selectedIndex = index;
+                break;
+            }
+        }
+        if (selectedIndex < 0) {
+            throw new IllegalStateException("Selected EMI is not pending for this loan account.");
+        }
+
+        List<EmiBreakDownDto> breakdowns = new ArrayList<>();
+        for (int index = 0; index <= selectedIndex; index++) {
+            EmiSchedules pending = pendingEmis.get(index);
+            if (pending.getDueDate() == null) {
+                throw new IllegalStateException("Pending EMI has no due date.");
+            }
+            breakdowns.add(getEmiBreakdown(pending.getEmiScheduleId()));
+        }
+        return breakdowns;
     }
 
 

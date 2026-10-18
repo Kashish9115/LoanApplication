@@ -8,14 +8,12 @@ import com.example.loanApplication.repository.CustomerRepository;
 import com.example.loanApplication.repository.NotificationsRepo;
 import com.example.loanApplication.service.EmailService;
 import com.example.loanApplication.service.NotificationService;
-import jakarta.persistence.criteria.CriteriaBuilder;
 import lombok.RequiredArgsConstructor;
 import org.modelmapper.ModelMapper;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.Optional;
 
 @RequiredArgsConstructor
 @Service

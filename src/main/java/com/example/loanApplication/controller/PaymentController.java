@@ -2,12 +2,17 @@ package com.example.loanApplication.controller;
 
 import com.example.loanApplication.apiResponse.ResponseApi;
 import com.example.loanApplication.dto.*;
+import com.example.loanApplication.service.EmiScheduleService;
 import com.example.loanApplication.service.LoanPaymentService;
 import com.example.loanApplication.service.RazorpayService;
+import com.example.loanApplication.serviceImpl.EmiScheduleServiceImpl;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+
+import java.math.BigDecimal;
+import java.util.List;
 
 
 @Slf4j
@@ -20,7 +25,7 @@ public class PaymentController {
 
     private final RazorpayService razorpayService; // Gateway Service
     private final LoanPaymentService paymentService;   // Domain Ledger Service
-
+ private  final EmiScheduleServiceImpl emiScheduleService;
 
 
     @PostMapping("/create-order/{emiScheduleId}")
@@ -46,25 +51,49 @@ public class PaymentController {
 
 
 
+//    @PostMapping("/verify-and-pay")
+//    public ResponseEntity<LoanPaymentResponseDTO> verifyAndPay(
+//            @RequestBody LoanPaymentRequestDTO requestDto) {
+//        razorpayService.verifySignature(
+//                requestDto.getRazorpayOrderId(),
+//                requestDto.getRazorpayPaymentId(),
+//                requestDto.getRazorpaySignature()
+//        );
+//
+//        LoanPaymentResponseDTO response =
+//                paymentService.processPaymentLedger(requestDto);
+//
+//        return ResponseEntity.ok(response);
+//    }
+
+
+
+
     @PostMapping("/verify-and-pay")
     public ResponseEntity<LoanPaymentResponseDTO> verifyAndPay(
             @RequestBody LoanPaymentRequestDTO requestDto) {
-        razorpayService.verifySignature(
+        if (requestDto.getEmiScheduleId() == null) {
+            throw new IllegalArgumentException("EMI schedule ID is required for Razorpay EMI verification.");
+        }
+        List<EmiBreakDownDto> breakdowns =
+                emiScheduleService.getPendingPaymentBreakdownsThrough(requestDto.getEmiScheduleId());
+        BigDecimal requiredAmount = breakdowns.stream()
+                .map(EmiBreakDownDto::getTotalPayableAmount)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+        razorpayService.verifyCapturedPayment(
                 requestDto.getRazorpayOrderId(),
                 requestDto.getRazorpayPaymentId(),
-                requestDto.getRazorpaySignature()
+                requestDto.getRazorpaySignature(),
+                requiredAmount
         );
 
-        LoanPaymentResponseDTO response =
-                paymentService.processPaymentLedger(requestDto);
+        // Force the ledger to use the server-calculated amount rather than a client value.
+        requestDto.setPaymentAmount(requiredAmount);
+        requestDto.setLoanAccountId(breakdowns.get(breakdowns.size() - 1).getLoanAccountId());
+        LoanPaymentResponseDTO response = paymentService.processPaymentLedger(requestDto);
 
         return ResponseEntity.ok(response);
     }
-
-
-
-
-
 
 
     @GetMapping("/history/customer/{loanAccountId}")

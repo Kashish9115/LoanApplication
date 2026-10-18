@@ -17,7 +17,6 @@ public class RazorpayConfig {
 
     @Bean
     public RazorpayClient razorpayClient() throws RazorpayException {
-        // Initializes and registers RazorpayClient as a Spring Bean
         return new RazorpayClient(keyId, keySecret);
     }
 
